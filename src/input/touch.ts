@@ -32,7 +32,11 @@ export class TouchInput implements InputSource {
   private bind(el: HTMLElement, dir: number): void {
     const down = (e: PointerEvent): void => {
       e.preventDefault();
-      el.setPointerCapture(e.pointerId);
+      try {
+        el.setPointerCapture(e.pointerId);
+      } catch {
+        /* pointer already gone; the up/cancel handlers still balance the map */
+      }
       this.pointers.set(e.pointerId, dir);
       el.classList.add('active');
       this.refresh();
