@@ -37,7 +37,7 @@ function makeBlobTexture(): CanvasTexture {
   c.width = c.height = 64;
   const g = c.getContext('2d')!;
   const grad = g.createRadialGradient(32, 32, 4, 32, 32, 32);
-  grad.addColorStop(0, 'rgba(0,0,0,0.55)');
+  grad.addColorStop(0, 'rgba(30,20,40,0.42)');
   grad.addColorStop(1, 'rgba(0,0,0,0)');
   g.fillStyle = grad;
   g.fillRect(0, 0, 64, 64);
@@ -91,7 +91,7 @@ export class CarModel {
 
     // Blob shadow: a soft dark disc just above the ground, riding with the car.
     const shadow = new Mesh(
-      new CircleGeometry(2.7, 16).rotateX(-Math.PI / 2),
+      new CircleGeometry(2.3, 16).rotateX(-Math.PI / 2),
       new MeshBasicMaterial({ map: makeBlobTexture(), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
     );
     shadow.position.y = 0.08;

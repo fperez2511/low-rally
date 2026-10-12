@@ -1,8 +1,9 @@
 import { BufferAttribute, BufferGeometry, Mesh, MeshLambertMaterial, Sphere, type Scene } from 'three';
-import { PALETTE, TERRAIN } from '../config';
+import { PALETTE, TERRAIN, TRACK, shade } from '../config';
 import { clamp } from '../util/math';
 import { hash2 } from '../util/random';
 import type { Terrain } from './terrain';
+import type { Track } from './track';
 
 const N = TERRAIN.cells;
 const SIZE = TERRAIN.chunkSize;
@@ -10,10 +11,19 @@ const CELL = SIZE / N;
 const R = TERRAIN.viewRadius;
 const POOL = (2 * R + 1) * (2 * R + 1);
 const TERRAIN_VERTS = N * N * 6;
+const MAX_ROAD_SEGMENTS = 160; // per chunk; each segment = road quad + two edge-line quads
+const ROAD_VERTS = MAX_ROAD_SEGMENTS * 18;
+const ROAD_LIFT = 0.05; // road sits just above the terrain skin (plus polygonOffset)
+const LINE_LIFT = 0.09;
+const LINE_WIDTH = 0.35;
+const CELLS_PER_CHUNK = TERRAIN.chunkSize / TRACK.gridCell;
 
 const rgb = (hex: number): [number, number, number] => [((hex >> 16) & 255) / 255, ((hex >> 8) & 255) / 255, (hex & 255) / 255];
 const GRASS = rgb(PALETTE.grass);
 const FOREST = rgb(PALETTE.forest);
+const ROAD_A = rgb(PALETTE.road);
+const ROAD_B = rgb(shade(PALETTE.road, 0.93)); // faint banding so speed reads on a flat-colour road
+const LINE = rgb(PALETTE.cream);
 
 const chunkKey = (cx: number, cz: number): number => (cx + 32768) * 65536 + (cz + 32768);
 
@@ -52,21 +62,44 @@ function tri(
   w.p = p;
 }
 
+/** Like tri() but guarantees an upward-facing triangle regardless of input winding. */
+function triUp(
+  w: TriWriter,
+  ax: number, ay: number, az: number,
+  bx: number, by: number, bz: number,
+  cx: number, cy: number, cz: number,
+  c: readonly [number, number, number],
+): void {
+  // Y component of (b - a) x (c - a); negative means the face points down, so swap b and c.
+  const ny = (bz - az) * (cx - ax) - (bx - ax) * (cz - az);
+  if (ny >= 0) tri(w, ax, ay, az, bx, by, bz, cx, cy, cz, c[0], c[1], c[2]);
+  else tri(w, ax, ay, az, cx, cy, cz, bx, by, bz, c[0], c[1], c[2]);
+}
+
 /** One pooled slot: geometry buffers are allocated once and rewritten in place. */
 class Chunk {
   cx = 0;
   cz = 0;
   active = false;
   readonly terrain: Mesh;
+  readonly road: Mesh;
   private readonly pos = new Float32Array(TERRAIN_VERTS * 3);
   private readonly nrm = new Float32Array(TERRAIN_VERTS * 3);
   private readonly col = new Float32Array(TERRAIN_VERTS * 3);
   private readonly out: TriWriter = { pos: this.pos, nrm: this.nrm, col: this.col, p: 0 };
+  private readonly rPos = new Float32Array(ROAD_VERTS * 3);
+  private readonly rNrm = new Float32Array(ROAD_VERTS * 3);
+  private readonly rCol = new Float32Array(ROAD_VERTS * 3);
+  private readonly roadOut: TriWriter = { pos: this.rPos, nrm: this.rNrm, col: this.rCol, p: 0 };
+  private readonly rPosAttr = new BufferAttribute(this.rPos, 3);
+  private readonly rNrmAttr = new BufferAttribute(this.rNrm, 3);
+  private readonly rColAttr = new BufferAttribute(this.rCol, 3);
+  private readonly range = new Int32Array(2);
   private readonly posAttr = new BufferAttribute(this.pos, 3);
   private readonly nrmAttr = new BufferAttribute(this.nrm, 3);
   private readonly colAttr = new BufferAttribute(this.col, 3);
 
-  constructor(material: MeshLambertMaterial) {
+  constructor(material: MeshLambertMaterial, roadMaterial: MeshLambertMaterial) {
     const geo = new BufferGeometry();
     geo.setAttribute('position', this.posAttr);
     geo.setAttribute('normal', this.nrmAttr);
@@ -74,10 +107,19 @@ class Chunk {
     geo.boundingSphere = new Sphere();
     this.terrain = new Mesh(geo, material);
     this.terrain.visible = false;
+
+    const rgeo = new BufferGeometry();
+    rgeo.setAttribute('position', this.rPosAttr);
+    rgeo.setAttribute('normal', this.rNrmAttr);
+    rgeo.setAttribute('color', this.rColAttr);
+    rgeo.boundingSphere = new Sphere();
+    this.road = new Mesh(rgeo, roadMaterial);
+    this.road.visible = false;
   }
 
   /** Rebuild this slot for chunk (cx, cz) in place; `heights` is shared scratch. */
   build(cx: number, cz: number, terrain: Terrain, heights: Float32Array): void {
+    const track = terrain.track;
     this.cx = cx;
     this.cz = cz;
     this.active = true;
@@ -139,11 +181,75 @@ class Chunk {
     this.terrain.geometry.boundingSphere!.center.set(x0 + SIZE / 2, (minH + maxH) / 2, z0 + SIZE / 2);
     this.terrain.geometry.boundingSphere!.radius = SIZE * 0.72 + (maxH - minH) / 2;
     this.terrain.visible = true;
+
+    this.buildRoad(track);
+  }
+
+  /**
+   * Road geometry for the centreline samples that fall inside this chunk: per segment a
+   * road quad, plus (on alternate bands) a cream edge line along each side.
+   */
+  private buildRoad(track: Track): void {
+    const out = this.roadOut;
+    out.p = 0;
+    const hw = TRACK.halfWidth;
+    const lw = LINE_WIDTH;
+    let segments = 0;
+
+    for (let gz = 0; gz < CELLS_PER_CHUNK; gz++) {
+      for (let gx = 0; gx < CELLS_PER_CHUNK; gx++) {
+        track.cellRange(this.cx * CELLS_PER_CHUNK + gx, this.cz * CELLS_PER_CHUNK + gz, this.range);
+        for (let k = this.range[0]; k < this.range[1] && segments < MAX_ROAD_SEGMENTS; k++, segments++) {
+          const i = track.itemAt(k);
+          const j = i + 1 === track.count ? 0 : i + 1;
+          // Right-hand normal of the direction of travel, in (x, z).
+          const rxi = -track.tz[i], rzi = track.tx[i];
+          const rxj = -track.tz[j], rzj = track.tx[j];
+          const xi = track.x[i], zi = track.z[i], yi = track.y[i] + ROAD_LIFT;
+          const xj = track.x[j], zj = track.z[j], yj = track.y[j] + ROAD_LIFT;
+          const band = (i >> 2) & 1;
+          const colour = band ? ROAD_B : ROAD_A;
+
+          // road quad: L_i, R_i, R_j, L_j
+          const lix = xi - rxi * hw, liz = zi - rzi * hw;
+          const rix = xi + rxi * hw, riz = zi + rzi * hw;
+          const ljx = xj - rxj * hw, ljz = zj - rzj * hw;
+          const rjx = xj + rxj * hw, rjz = zj + rzj * hw;
+          triUp(out, lix, yi, liz, rix, yi, riz, rjx, yj, rjz, colour);
+          triUp(out, lix, yi, liz, rjx, yj, rjz, ljx, yj, ljz, colour);
+
+          if (band === 0) {
+            const yli = yi + (LINE_LIFT - ROAD_LIFT), ylj = yj + (LINE_LIFT - ROAD_LIFT);
+            const inner = hw - lw;
+            // left line (outer edge -> slightly inside)
+            const l2ix = xi - rxi * inner, l2iz = zi - rzi * inner;
+            const l2jx = xj - rxj * inner, l2jz = zj - rzj * inner;
+            triUp(out, lix, yli, liz, l2ix, yli, l2iz, l2jx, ylj, l2jz, LINE);
+            triUp(out, lix, yli, liz, l2jx, ylj, l2jz, ljx, ylj, ljz, LINE);
+            // right line
+            const r2ix = xi + rxi * inner, r2iz = zi + rzi * inner;
+            const r2jx = xj + rxj * inner, r2jz = zj + rzj * inner;
+            triUp(out, r2ix, yli, r2iz, rix, yli, riz, rjx, ylj, rjz, LINE);
+            triUp(out, r2ix, yli, r2iz, rjx, ylj, rjz, r2jx, ylj, r2jz, LINE);
+          }
+        }
+      }
+    }
+
+    const geo = this.road.geometry;
+    geo.setDrawRange(0, out.p / 3);
+    this.rPosAttr.needsUpdate = true;
+    this.rNrmAttr.needsUpdate = true;
+    this.rColAttr.needsUpdate = true;
+    const sphere = this.terrain.geometry.boundingSphere!;
+    geo.boundingSphere!.copy(sphere);
+    this.road.visible = segments > 0;
   }
 
   release(): void {
     this.active = false;
     this.terrain.visible = false;
+    this.road.visible = false;
   }
 }
 
@@ -154,6 +260,8 @@ class Chunk {
  */
 export class ChunkManager {
   private readonly material = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
+  // Polygon offset pulls the road toward the camera so it never z-fights the terrain skin.
+  private readonly roadMaterial = new MeshLambertMaterial({ vertexColors: true, flatShading: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
   private readonly pool: Chunk[] = [];
   private readonly live = new Map<number, Chunk>();
   private readonly queue: number[] = []; // flat [cx, cz, cx, cz, ...]
@@ -164,9 +272,9 @@ export class ChunkManager {
 
   constructor(scene: Scene, private readonly terrain: Terrain) {
     for (let i = 0; i < POOL; i++) {
-      const c = new Chunk(this.material);
+      const c = new Chunk(this.material, this.roadMaterial);
       this.pool.push(c);
-      scene.add(c.terrain);
+      scene.add(c.terrain, c.road);
     }
   }
 

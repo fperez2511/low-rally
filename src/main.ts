@@ -12,13 +12,14 @@ import { EngineAudio } from './audio';
 import { CameraRig } from './car/camera';
 import { CarController } from './car/controller';
 import { CarModel } from './car/model';
-import { CAR, FOG, PALETTE, RENDER, SIM } from './config';
+import { CAR, FOG, PALETTE, RENDER, SIM, shade } from './config';
 import { KeyboardInput } from './input/keyboard';
 import { isTouchDevice, TouchInput } from './input/touch';
 import { createInputState, mergeInputs, type InputSource } from './input/types';
 import { Hud, formatTime } from './ui/hud';
 import { showStartScreen } from './ui/startScreen';
 import { applyPaletteCssVars } from './ui/theme';
+import { Stage } from './stage';
 import { World } from './world/world';
 
 applyPaletteCssVars();
@@ -35,9 +36,9 @@ document.getElementById('app')!.appendChild(renderer.domElement);
 const scene = new Scene();
 scene.background = new Color(PALETTE.sky);
 scene.fog = new Fog(PALETTE.sky, FOG.near, FOG.far);
-scene.add(new HemisphereLight(PALETTE.cream, PALETTE.forest, 1.6));
-const sun = new DirectionalLight(PALETTE.cream, 1.8);
-sun.position.set(-0.6, 1, 0.4); // no shadows: the car gets a blob instead
+scene.add(new HemisphereLight(PALETTE.cream, shade(PALETTE.forest, 0.6), 1.15));
+const sun = new DirectionalLight(PALETTE.cream, 1.7);
+sun.position.set(-0.8, 0.65, 0.35); // no shadows: the car gets a blob instead
 scene.add(sun);
 
 const camera = new PerspectiveCamera(60, 1, RENDER.near, RENDER.far);
@@ -45,6 +46,7 @@ const camera = new PerspectiveCamera(60, 1, RENDER.near, RENDER.far);
 // ---------- game objects ----------
 const ground = new World(scene);
 
+const stage = new Stage(ground.track);
 const car = new CarController();
 const carModel = new CarModel();
 scene.add(carModel.root);
@@ -60,13 +62,16 @@ const input = createInputState();
 
 // ---------- state ----------
 let started = false;
-let stageTime = 0;
+let announced = false; // finish banner shown for this run
 
 function restart(): void {
-  ground.prime(0, 0);
-  car.reset(0, 0, 0, ground);
+  const s = ground.track.spawn();
+  ground.prime(s.x, s.z);
+  car.reset(s.x, s.z, s.yaw, ground);
   rig.reset(car);
-  stageTime = 0;
+  stage.reset(s.x, s.z);
+  hud.showBanner(null);
+  announced = false;
 }
 
 function onResize(): void {
@@ -102,7 +107,7 @@ function frame(now: number): void {
     while (acc >= SIM.dt && steps < SIM.maxSteps) {
       mergeInputs(input, sources);
       car.step(SIM.dt, input, ground);
-      stageTime += SIM.dt;
+      stage.update(SIM.dt, car.x, car.z);
       acc -= SIM.dt;
       steps++;
     }
@@ -121,9 +126,19 @@ function frame(now: number): void {
   if (hudTimer >= 0.1) {
     hudTimer = 0;
     hud.setSpeed(Math.abs(car.speed) * 3.6);
-    hud.setTime(formatTime(stageTime));
+    hud.setTime(formatTime(stage.time));
+    hud.setBest(stage.best === null ? '--:--.--' : formatTime(stage.best));
+    if (stage.state === 'finished' && !announced) {
+      announced = true;
+      hud.showBanner(`${stage.newRecord ? 'New best!' : 'Finish'}<small>${formatTime(stage.time)}</small>`);
+    }
   }
 
   renderer.render(scene, camera);
 }
 requestAnimationFrame(frame);
+
+// Dev-only handle for poking at the game from the console / automated checks.
+if (import.meta.env.DEV) {
+  (window as unknown as Record<string, unknown>).__game = { car, stage, ground, sources, restart };
+}

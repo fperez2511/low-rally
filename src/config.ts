@@ -99,3 +99,24 @@ export const TERRAIN = {
   buildPerFrame: 2, // chunk (re)builds allowed per rendered frame
   amplitude: 14, // hill height in metres
 };
+
+export const TRACK = {
+  seed: 11,
+  controlPoints: 12, // spline control points around the loop
+  radius: 300, // mean loop radius (m); radius per point varies 0.55x..1.3x
+  sampleSpacing: 2, // metres between centreline samples
+  halfWidth: 4.5, // road half-width
+  shoulder: 3, // flat verge either side before the hills take over
+  blendEnd: 40, // distance from centreline where terrain is fully "natural" again (= grid cell)
+  gridCell: 40, // spatial hash cell; must be >= blendEnd so a 3x3 lookup always finds the road
+  startBehind: 6, // car spawns this many samples before the line
+  // Gentle road elevation: harmonics of the loop length so the profile closes on itself.
+  elevation: [
+    { harmonic: 2, amp: 5 },
+    { harmonic: 3, amp: 3.5 },
+    { harmonic: 5, amp: 1.5 },
+  ],
+};
+
+/** Name of the localStorage key holding the best stage time (seconds). */
+export const BEST_TIME_KEY = 'lowrally.best.v1';
