@@ -1,4 +1,5 @@
 import './style.css';
+import { registerSW } from 'virtual:pwa-register';
 import {
   Color,
   DirectionalLight,
@@ -23,6 +24,7 @@ import { Stage } from './stage';
 import { World } from './world/world';
 
 applyPaletteCssVars();
+registerSW({ immediate: true }); // offline support; the plugin auto-updates the worker
 
 // ---------- renderer / scene ----------
 const dpr = Math.min(window.devicePixelRatio, RENDER.maxPixelRatio);
