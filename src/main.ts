@@ -19,7 +19,7 @@ import { createInputState, mergeInputs, type InputSource } from './input/types';
 import { Hud, formatTime } from './ui/hud';
 import { showStartScreen } from './ui/startScreen';
 import { applyPaletteCssVars } from './ui/theme';
-import { FlatGround } from './world/ground';
+import { World } from './world/world';
 
 applyPaletteCssVars();
 
@@ -43,8 +43,7 @@ scene.add(sun);
 const camera = new PerspectiveCamera(60, 1, RENDER.near, RENDER.far);
 
 // ---------- game objects ----------
-const ground = new FlatGround();
-scene.add(ground.mesh);
+const ground = new World(scene);
 
 const car = new CarController();
 const carModel = new CarModel();
@@ -64,6 +63,7 @@ let started = false;
 let stageTime = 0;
 
 function restart(): void {
+  ground.prime(0, 0);
   car.reset(0, 0, 0, ground);
   rig.reset(car);
   stageTime = 0;
@@ -114,7 +114,7 @@ function frame(now: number): void {
   carModel.update(car, alpha, dt);
   const p = carModel.root.position;
   rig.update(car, p.x, p.y, p.z, dt);
-  ground.follow(p.x, p.z);
+  ground.update(p.x, p.z);
   audio.update(Math.abs(car.speed) / CAR.maxSpeed, input.throttle);
 
   hudTimer += dt;

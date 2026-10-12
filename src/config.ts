@@ -90,3 +90,12 @@ export const CAMERA = {
   portraitBoost: 26, // extra FOV in portrait so the road stays visible
   minClearance: 1.4, // keep the camera above the ground
 };
+
+export const TERRAIN = {
+  seed: 1337,
+  chunkSize: 80, // metres; also 2x the track spatial-grid cell (see world/track.ts)
+  cells: 20, // quads per chunk edge (4 m cells)
+  viewRadius: 2, // chunks kept around the car: (2r+1)^2 live chunks, fixed pool
+  buildPerFrame: 2, // chunk (re)builds allowed per rendered frame
+  amplitude: 14, // hill height in metres
+};
