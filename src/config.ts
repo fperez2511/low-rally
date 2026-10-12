@@ -120,3 +120,14 @@ export const TRACK = {
 
 /** Name of the localStorage key holding the best stage time (seconds). */
 export const BEST_TIME_KEY = 'lowrally.best.v1';
+
+export const PROPS = {
+  seed: 4242,
+  maxTreesPerChunk: 90,
+  maxRocksPerChunk: 30,
+  treeClearance: 3.5, // min gap between road edge and a tree trunk
+  treeSpread: 38, // trees scatter out to this far past the clearance
+  treeChance: 0.12, // per sample per side, in open meadow ...
+  treeChanceForest: 0.4, // ... rising to this in dark-green forest patches
+  rockChance: 0.07,
+};

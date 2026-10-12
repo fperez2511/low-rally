@@ -140,5 +140,5 @@ requestAnimationFrame(frame);
 
 // Dev-only handle for poking at the game from the console / automated checks.
 if (import.meta.env.DEV) {
-  (window as unknown as Record<string, unknown>).__game = { car, stage, ground, sources, restart };
+  (window as unknown as Record<string, unknown>).__game = { car, stage, ground, sources, restart, renderer };
 }

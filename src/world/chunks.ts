@@ -3,6 +3,7 @@ import { PALETTE, TERRAIN, TRACK, shade } from '../config';
 import { clamp } from '../util/math';
 import { hash2 } from '../util/random';
 import type { Terrain } from './terrain';
+import { PropData, PropField, scatterProps } from './props';
 import type { Track } from './track';
 
 const N = TERRAIN.cells;
@@ -81,6 +82,7 @@ class Chunk {
   cx = 0;
   cz = 0;
   active = false;
+  readonly props = new PropData();
   readonly terrain: Mesh;
   readonly road: Mesh;
   private readonly pos = new Float32Array(TERRAIN_VERTS * 3);
@@ -183,6 +185,7 @@ class Chunk {
     this.terrain.visible = true;
 
     this.buildRoad(track);
+    scatterProps(track, terrain, cx, cz, this.props);
   }
 
   /**
@@ -250,6 +253,7 @@ class Chunk {
     this.active = false;
     this.terrain.visible = false;
     this.road.visible = false;
+    this.props.treeCount = this.props.rockCount = 0;
   }
 }
 
@@ -266,6 +270,8 @@ export class ChunkManager {
   private readonly live = new Map<number, Chunk>();
   private readonly queue: number[] = []; // flat [cx, cz, cx, cz, ...]
   private readonly scratch = new Float32Array((N + 1) * (N + 1));
+  private readonly props: PropField;
+  private propsDirty = false;
   private centerKey = Number.NaN;
   private centerX = 0;
   private centerZ = 0;
@@ -276,6 +282,7 @@ export class ChunkManager {
       this.pool.push(c);
       scene.add(c.terrain, c.road);
     }
+    this.props = new PropField(scene, POOL);
   }
 
   /** Reset around a new position and build everything immediately (start / restart). */
@@ -303,6 +310,7 @@ export class ChunkManager {
       if (Math.abs(chunk.cx - cx) > R || Math.abs(chunk.cz - cz) > R) {
         chunk.release();
         this.live.delete(key);
+        this.propsDirty = true;
       }
     }
     // Queue the missing ones.
@@ -325,6 +333,10 @@ export class ChunkManager {
       this.buildOne(cx, cz);
       built++;
     }
+    if (this.propsDirty) {
+      this.props.rebuild(this.pool);
+      this.propsDirty = false;
+    }
   }
 
   private buildOne(cx: number, cz: number): void {
@@ -336,5 +348,6 @@ export class ChunkManager {
     if (!slot) return;
     slot.build(cx, cz, this.terrain, this.scratch);
     this.live.set(chunkKey(cx, cz), slot);
+    this.propsDirty = true;
   }
 }
