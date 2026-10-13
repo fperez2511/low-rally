@@ -5,7 +5,10 @@ export class KeyboardInput implements InputSource {
   readonly state: InputState = createInputState();
   private readonly down = new Set<string>();
 
-  constructor(private readonly onRestart?: () => void) {
+  constructor(
+    private readonly onRestart?: () => void,
+    private readonly isSuspended: () => boolean = () => false,
+  ) {
     window.addEventListener('keydown', this.onKeyDown);
     window.addEventListener('keyup', this.onKeyUp);
     window.addEventListener('blur', this.onBlur);
@@ -18,6 +21,12 @@ export class KeyboardInput implements InputSource {
   }
 
   private readonly onKeyDown = (e: KeyboardEvent): void => {
+    if (this.isSuspended()) {
+      // A modal (leaderboard) is open: drop held keys and leave keys like Space to its buttons.
+      this.down.clear();
+      this.refresh();
+      return;
+    }
     if (e.code === 'KeyR' && !e.repeat) this.onRestart?.();
     if (isDriveKey(e.code)) e.preventDefault();
     this.down.add(e.code);

@@ -34,6 +34,19 @@
     </div>
 
     <div id="banner" hidden></div>
+    <button id="banner-lb" class="lb-btn" type="button" hidden>Leaderboard</button>
+
+    <div id="leaderboard" hidden role="dialog" aria-modal="true" aria-labelledby="lb-title">
+      <div class="lb-card">
+        <h2 id="lb-title">Leaderboard</h2>
+        <ol id="lb-list"></ol>
+        <p id="lb-empty" hidden>No runs yet. Drive a lap!</p>
+        <div class="lb-actions">
+          <button id="lb-clear" class="lb-btn lb-btn-quiet" type="button">Clear</button>
+          <button id="lb-close" class="lb-btn" type="button">Close</button>
+        </div>
+      </div>
+    </div>
 
     <div id="touch" hidden>
       <div class="zone zone-left" data-steer="-1"><span>&#8249;</span></div>
@@ -44,6 +57,7 @@
     <div id="start">
       <h1>Low Rally</h1>
       <p class="start-cta">Tap to start</p>
+      <button id="start-lb" class="lb-btn" type="button">Leaderboard</button>
       <p class="start-help">
         Touch: hold left / right side to steer, brake button to slow down.<br />
         Keyboard: arrows or WASD, space to brake, R to restart.

@@ -1,4 +1,4 @@
-import { BEST_TIME_KEY } from './config';
+import type { Leaderboard } from './leaderboard/leaderboard';
 import type { Track } from './world/track';
 
 export type StageState = 'armed' | 'running' | 'finished';
@@ -13,20 +13,30 @@ export type StageState = 'armed' | 'running' | 'finished';
 export class Stage {
   state: StageState = 'armed';
   time = 0;
-  best: number | null = readBest();
   /** True for exactly one update after a new record. */
   newRecord = false;
+  /** Leaderboard rank of the last finished run (1-based), or null if it did not place. */
+  lastRank: number | null = null;
 
   private index = 0;
   private travelled = 0; // samples driven since the start line
 
-  constructor(private readonly track: Track) {}
+  constructor(
+    private readonly track: Track,
+    private readonly board: Leaderboard,
+  ) {}
+
+  /** Fastest recorded time, straight from the leaderboard (single source of truth). */
+  get best(): number | null {
+    return this.board.best();
+  }
 
   /** Re-arm with the car at the given spawn point. */
   reset(x: number, z: number): void {
     this.state = 'armed';
     this.time = 0;
     this.newRecord = false;
+    this.lastRank = null;
     this.travelled = 0;
     this.index = this.track.nearestIndexNear(x, z, this.track.count - 1, this.track.count >> 1);
   }
@@ -50,28 +60,8 @@ export class Stage {
     this.travelled += delta;
     if (this.travelled >= n) {
       this.state = 'finished';
-      this.newRecord = this.best === null || this.time < this.best;
-      if (this.newRecord) {
-        this.best = this.time;
-        writeBest(this.time);
-      }
+      this.lastRank = this.board.submit(this.time);
+      this.newRecord = this.lastRank === 1;
     }
-  }
-}
-
-function readBest(): number | null {
-  try {
-    const v = parseFloat(localStorage.getItem(BEST_TIME_KEY) ?? '');
-    return Number.isFinite(v) ? v : null;
-  } catch {
-    return null; // storage blocked (private mode etc.)
-  }
-}
-
-function writeBest(t: number): void {
-  try {
-    localStorage.setItem(BEST_TIME_KEY, String(t));
-  } catch {
-    /* ignore */
   }
 }
