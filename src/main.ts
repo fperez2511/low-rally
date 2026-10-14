@@ -13,11 +13,14 @@ import { EngineAudio } from './audio';
 import { CameraRig } from './car/camera';
 import { CarController } from './car/controller';
 import { CarModel } from './car/model';
-import { CAR, FOG, PALETTE, RENDER, SIM, shade } from './config';
+import { BEST_TIME_KEY, CAR, FOG, PALETTE, RENDER, SIM, shade } from './config';
 import { KeyboardInput } from './input/keyboard';
 import { isTouchDevice, TouchInput } from './input/touch';
+import { Leaderboard } from './leaderboard/leaderboard';
+import { createStore } from './leaderboard/store';
 import { createInputState, mergeInputs, type InputSource } from './input/types';
 import { Hud, formatTime } from './ui/hud';
+import { LeaderboardView } from './ui/leaderboardView';
 import { showStartScreen } from './ui/startScreen';
 import { applyPaletteCssVars } from './ui/theme';
 import { Stage } from './stage';
@@ -48,7 +51,9 @@ const camera = new PerspectiveCamera(60, 1, RENDER.near, RENDER.far);
 // ---------- game objects ----------
 const ground = new World(scene);
 
-const stage = new Stage(ground.track);
+const board = new Leaderboard(createStore(), readLegacyBest);
+const stage = new Stage(ground.track, board);
+const leaderboardView = new LeaderboardView(board);
 const car = new CarController();
 const carModel = new CarModel();
 scene.add(carModel.root);
@@ -58,7 +63,7 @@ const hud = new Hud(() => restart());
 const audio = new EngineAudio();
 
 // ---------- input ----------
-const sources: InputSource[] = [new KeyboardInput(() => restart())];
+const sources: InputSource[] = [new KeyboardInput(() => restart(), () => leaderboardView.isOpen)];
 if (isTouchDevice()) sources.push(new TouchInput(document.getElementById('touch')!));
 const input = createInputState();
 
@@ -86,11 +91,18 @@ window.addEventListener('resize', onResize);
 onResize();
 restart();
 
-showStartScreen(() => {
-  started = true;
-  audio.unlock();
-  hud.show();
-});
+document.getElementById('start-lb')!.addEventListener('pointerdown', (e) => e.stopPropagation()); // don't start the run
+document.getElementById('start-lb')!.addEventListener('click', () => leaderboardView.open(null));
+document.getElementById('banner-lb')!.addEventListener('click', () => leaderboardView.open(stage.lastRank));
+
+showStartScreen(
+  () => {
+    started = true;
+    audio.unlock();
+    hud.show();
+  },
+  () => leaderboardView.isOpen,
+);
 
 // ---------- loop: fixed 60 Hz simulation, render every animation frame ----------
 let last = performance.now();
@@ -142,5 +154,15 @@ requestAnimationFrame(frame);
 
 // Dev-only handle for poking at the game from the console / automated checks.
 if (import.meta.env.DEV) {
-  (window as unknown as Record<string, unknown>).__game = { car, stage, ground, sources, restart, renderer };
+  (window as unknown as Record<string, unknown>).__game = { car, stage, board, ground, sources, restart, renderer };
+}
+
+/** The single best time kept by earlier versions; read once so the leaderboard can import it. */
+function readLegacyBest(): number | null {
+  try {
+    const v = parseFloat(localStorage.getItem(BEST_TIME_KEY) ?? '');
+    return Number.isFinite(v) ? v : null;
+  } catch {
+    return null;
+  }
 }

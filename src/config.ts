@@ -118,8 +118,15 @@ export const TRACK = {
   ],
 };
 
-/** Name of the localStorage key holding the best stage time (seconds). */
+/** Legacy localStorage key holding the single best stage time (seconds). Read only, for migration. */
 export const BEST_TIME_KEY = 'lowrally.best.v1';
+
+/** Persisted top-N leaderboard (see specs/001-persist-leaderboard). */
+export const LEADERBOARD = {
+  key: 'lowrally.leaderboard.v1',
+  size: 10,
+  schemaVersion: 1,
+};
 
 export const PROPS = {
   seed: 4242,

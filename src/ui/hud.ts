@@ -16,6 +16,7 @@ export class Hud {
   private readonly time = document.getElementById('hud-time')!;
   private readonly best = document.getElementById('hud-best')!;
   private readonly banner = document.getElementById('banner')!;
+  private readonly bannerLb = document.getElementById('banner-lb')!;
   private lastSpeed = -1;
   private lastTime = '';
   private lastBest = '';
@@ -53,6 +54,7 @@ export class Hud {
   }
 
   showBanner(html: string | null): void {
+    this.bannerLb.hidden = html === null;
     if (html === null) {
       this.banner.hidden = true;
       return;

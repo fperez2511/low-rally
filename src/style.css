@@ -158,3 +158,73 @@ html, body {
 }
 .start-help { margin: 18px 0 0; font-size: 13px; line-height: 1.6; opacity: 0.8; font-weight: 600; }
 @keyframes pulse { 50% { opacity: 0.35; } }
+
+/* ---------- Leaderboard ---------- */
+.lb-btn {
+  pointer-events: auto;
+  font: inherit;
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cream);
+  background: rgba(44, 42, 52, 0.55);
+  border: 2px solid var(--cream);
+  border-radius: 999px;
+  min-height: 44px;
+  padding: 10px 22px;
+  cursor: pointer;
+}
+.lb-btn:active { background: var(--car); }
+.lb-btn-quiet { opacity: 0.8; }
+#start-lb { margin-top: 18px; }
+#banner-lb {
+  position: fixed;
+  left: 50%;
+  top: calc(28% + 96px);
+  transform: translateX(-50%);
+  z-index: 11;
+}
+
+#leaderboard {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+    max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  background: rgba(44, 42, 52, 0.7);
+  touch-action: pan-y;
+}
+.lb-card {
+  width: min(420px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 18px 20px;
+  background: var(--ink);
+  border: 3px solid var(--cream);
+  border-radius: 10px;
+}
+.lb-card h2 {
+  margin: 0 0 10px;
+  font-size: 22px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: center;
+}
+#lb-list { list-style: none; margin: 0; padding: 0; }
+#lb-list li {
+  display: grid;
+  grid-template-columns: 2.2em 1fr auto;
+  gap: 10px;
+  align-items: baseline;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-variant-numeric: tabular-nums;
+}
+#lb-list li.lb-new { background: var(--car); }
+.lb-time { font-size: 18px; }
+.lb-date { font-size: 12px; opacity: 0.75; }
+.lb-tag { margin-left: 8px; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; }
+#lb-empty { text-align: center; opacity: 0.85; margin: 18px 0; }
+.lb-actions { display: flex; justify-content: space-between; gap: 12px; margin-top: 14px; }
