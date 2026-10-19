@@ -12,12 +12,12 @@ npm install
 npm run dev
 ```
 
-Open the printed `http://localhost:5173`. Click / tap to start, then drive one lap. Your ten fastest laps are kept on the device as a leaderboard (open it from the start screen or the finish banner).
+Open the printed `http://localhost:5173`. Press **Start** in the main menu, then drive one lap. Your ten fastest laps are kept on the device as a leaderboard (open it from the menu or the finish banner). The **Menu** button (or Esc) pauses the game and offers Resume, Restart, Sound on/off, Leaderboard and About (author and version).
 
-| Input | Steer | Throttle | Brake / reverse | Restart |
+| Input | Steer | Throttle | Brake / reverse | Menu / restart |
 | --- | --- | --- | --- | --- |
-| Keyboard | ← → or A D | ↑ or W | ↓, S or Space | R or the button |
-| Touch | hold left / right half of the screen | automatic | on-screen **Brake** button | the button |
+| Keyboard | ← → or A D | ↑ or W | ↓, S or Space | Esc for the menu; R restarts (asks first mid-run) |
+| Touch | hold the left / right third of the screen | automatic | on-screen **Brake** button | the **Menu** button |
 
 Braking while turning at speed unloads the rear tyres and kicks the car into a drift; lift off or counter-steer to catch it. Grass is slower and has less grip.
 
@@ -32,7 +32,7 @@ The dev server already listens on all interfaces (`server.host: true`).
 Notes:
 
 - The game itself works over plain HTTP on the LAN. **Service workers (offline mode / install) only work on `https://` or `localhost`**, so the PWA bits can't be tested from a LAN IP. To test them on a phone use an HTTPS tunnel, e.g. `npm run build && npm run preview` in one terminal and `npx cloudflared tunnel --url http://localhost:4173` (or ngrok) in another, then open the `https://` URL it gives you.
-- iOS Safari only starts audio after a tap, which is what the start screen is for.
+- iOS Safari only starts audio after a tap, which is what the Start button is for.
 - Landscape is recommended; portrait works (the camera widens its FOV).
 
 ## Build and deploy as a PWA
@@ -61,7 +61,7 @@ src/
   world/           track (spline + spatial hash), terrain (noise heightfield),
                    chunk manager (pooled terrain + road meshes), props, start line
   car/             controller (the handling model), model (primitives), camera rig
-  ui/              HUD, start screen, leaderboard panel, palette -> CSS variables
+  ui/              HUD, menu (start / pause / About), leaderboard panel, palette -> CSS variables
 ```
 
 ### How it works (the non-obvious parts)
@@ -75,6 +75,7 @@ src/
   - *Grip*: lateral velocity is removed by the tyres up to a cap (`gripAccel`). The cap fades with slip angle (the grip curve), so once the car is sideways it keeps sliding until you unwind the wheel; braking while turning cuts rear grip to start a drift; grass scales grip, engine power and drag.
   - *Longitudinal*: engine pull tapers to zero at max speed, plus rolling + quadratic drag; brake slows, then reverses once stopped.
 - **Leaderboard.** `Leaderboard` is a DOM-free model over a `LeaderboardStore` (`localStorage` if usable, otherwise in-memory for the session). Times are stored as `{ v: 1, entries: [{ time, date }] }` under `lowrally.leaderboard.v1`, written once per finished stage after re-reading storage so other tabs' runs are merged. On first load the old single best time (`lowrally.best.v1`) is imported once as an undated entry; the old key is left untouched. Bad or corrupt stored data is dropped entry by entry. Design notes are in `specs/001-persist-leaderboard/`.
+- **Menu and pause.** `GameFlow` (`game/flow.ts`) is a tiny title / playing / paused state machine. Pausing just stops stepping the fixed-timestep simulation, so `Stage.time` (which only advances inside the step) never counts paused time; opening the menu also releases held keys/touches and mutes the engine. Restart asks for confirmation only while the stage clock is running. The sound preference lives under `lowrally.settings.v1`. The About card shows `AUTHOR` and `VERSION` from `src/config.ts`; bump `VERSION` by hand like any other constant. Design notes are in `specs/002-main-menu/`.
 - **Loop.** Simulation steps at a fixed 60 Hz; rendering interpolates between the last two sim states, so it's smooth at 60/90/120 Hz displays. Pixel ratio is capped at `min(devicePixelRatio, 2)`, MSAA is skipped on ≥2× screens, there are no real-time shadows (blob shadow instead), and the game loop allocates nothing (HUD DOM writes are throttled to 10 Hz and only on change).
 
 ## Scope
@@ -85,7 +86,7 @@ This is an MVP. The stage is a single lap of a seeded loop; the line at the star
 
 - AI opponents / ghost car of your best run
 - Multiplayer
-- Menus: stage select, car select, settings, pause
+- Menus: stage select, car select
 - Checkpoints / wrong-way detection (the timer only follows progress along the road, so a determined shortcut across a hairpin could cut time)
 - Multiple procedural stages, point-to-point stages, seed picker
 - Props collisions and car damage; jumps / airtime

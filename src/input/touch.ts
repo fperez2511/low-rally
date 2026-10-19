@@ -6,7 +6,7 @@ export function isTouchDevice(): boolean {
 }
 
 /**
- * Left/right screen halves steer, a button brakes, throttle is automatic.
+ * Left/right screen thirds steer (the middle third is inert), a button brakes, throttle is automatic.
  * Uses Pointer Events with pointer capture so multi-touch (steer + brake) just works
  * and a finger sliding off its zone still releases cleanly.
  */
@@ -15,7 +15,7 @@ export class TouchInput implements InputSource {
   private readonly pointers = new Map<number, number>(); // pointerId -> steer dir (-1/+1) or 0 for brake
   private readonly cleanups: Array<() => void> = [];
 
-  constructor(root: HTMLElement) {
+  constructor(private readonly root: HTMLElement) {
     this.state.throttle = 1; // auto-throttle
     root.hidden = false;
 
@@ -23,6 +23,12 @@ export class TouchInput implements InputSource {
       this.bind(el, Number(el.dataset.steer));
     });
     this.bind(root.querySelector<HTMLElement>('#touch-brake')!, 0);
+  }
+
+  release(): void {
+    this.pointers.clear();
+    this.root.querySelectorAll('.active').forEach((el) => el.classList.remove('active'));
+    this.refresh();
   }
 
   dispose(): void {

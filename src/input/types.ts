@@ -15,6 +15,8 @@ export interface InputState {
 export interface InputSource {
   /** Live state, mutated by event handlers. */
   readonly state: InputState;
+  /** Drop any held input (menu opened, page hidden). */
+  release(): void;
   dispose(): void;
 }
 

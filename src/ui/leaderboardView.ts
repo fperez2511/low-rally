@@ -23,7 +23,10 @@ export class LeaderboardView {
       }
     });
     window.addEventListener('keydown', (e) => {
-      if (e.code === 'Escape' && this.isOpen) this.close();
+      if (e.code === 'Escape' && this.isOpen) {
+        e.preventDefault(); // tells the menu's own Escape handler this press was already used
+        this.close();
+      }
     });
   }
 

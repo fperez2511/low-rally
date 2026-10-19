@@ -6,7 +6,6 @@ export class KeyboardInput implements InputSource {
   private readonly down = new Set<string>();
 
   constructor(
-    private readonly onRestart?: () => void,
     private readonly isSuspended: () => boolean = () => false,
   ) {
     window.addEventListener('keydown', this.onKeyDown);
@@ -27,7 +26,6 @@ export class KeyboardInput implements InputSource {
       this.refresh();
       return;
     }
-    if (e.code === 'KeyR' && !e.repeat) this.onRestart?.();
     if (isDriveKey(e.code)) e.preventDefault();
     this.down.add(e.code);
     this.refresh();
@@ -38,10 +36,12 @@ export class KeyboardInput implements InputSource {
     this.refresh();
   };
 
-  private readonly onBlur = (): void => {
+  private readonly onBlur = (): void => this.release();
+
+  release(): void {
     this.down.clear();
     this.refresh();
-  };
+  }
 
   private refresh(): void {
     const d = this.down;
