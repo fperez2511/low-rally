@@ -30,12 +30,12 @@ Pure state machine in `src/game/flow.ts`; no DOM, no timers.
 
 Stored shape and failure behaviour: see [contracts/settings-format.md](contracts/settings-format.md).
 
-## VersionInfo (build-time constants)
+## VersionInfo (config constants)
 
 | Field | Source | Notes |
 |-------|--------|-------|
 | `author` | `AUTHOR` in `src/config.ts` | "Fabricio Perez" |
-| `commit` | `__APP_COMMIT__` (Vite `define`) | Short hash, or `"unknown"` when unavailable |
+| `version` | `VERSION` in `src/config.ts` | Author-maintained string, edited by hand like any other constant (initially `"0.0.2"`) |
 
 ## Relationships
 

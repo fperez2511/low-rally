@@ -1,4 +1,4 @@
-import { AUTHOR } from '../config';
+import { AUTHOR, VERSION } from '../config';
 
 /** Intents the menu raises; main.ts binds them to the game (Command pattern). */
 export interface MenuActions {
@@ -37,7 +37,7 @@ export class MenuView {
 
   constructor(actions: MenuActions) {
     el('about-author').textContent = AUTHOR;
-    el('about-version').textContent = __APP_COMMIT__;
+    el('about-version').textContent = VERSION;
 
     this.start.addEventListener('click', () => actions.onStart());
     this.resume.addEventListener('click', () => actions.onResume());

@@ -32,11 +32,12 @@ All Technical Context items were known from the existing codebase; no NEEDS CLAR
 - **Rationale**: Mirrors the leaderboard store approach (constitution: `localStorage` only, degrade gracefully). A versioned key leaves room for more settings without a migration.
 - **Alternatives**: Reuse the leaderboard store (wrong key and responsibility); a plain boolean key (no versioning).
 
-## 6. Version (commit) in the About card
+## 6. Version in the About card
 
-- **Decision**: Resolve the short commit at build time in `vite.config.ts` (`git rev-parse --short HEAD`, falling back to the first 7 characters of `GITHUB_SHA`, then `"unknown"`) and expose it through Vite `define` as `__APP_COMMIT__`, typed in `src/env.d.ts`.
-- **Rationale**: The game is a static, offline PWA; there is no server to ask. The deploy workflow's `actions/checkout` includes `.git`, so the hash resolves in CI, and the `GITHUB_SHA` fallback covers shallow or detached cases. A build with neither shows "unknown" (spec edge case). Because the PWA precaches the bundle, the hash always matches the cached code the player is running.
-- **Alternatives**: A generated `version.json` fetched at runtime (needs network or its own precache entry, may disagree with cached code); a prebuild script writing a source file (extra step and a file to ignore); injecting `package.json` version (not the commit, as requested).
+- **Decision (amended 2026-10-18)**: The version is a string constant `VERSION` in `src/config.ts`, next to `AUTHOR` and the other tuning constants, imported directly by the menu. It is no longer derived from git. No Vite `define`, no `src/env.d.ts`, no git or `GITHUB_SHA` lookup.
+- **Rationale**: The author wants to control the version explicitly, like any other constant, and the constitution already centralises constants in `src/config.ts`. It removes build-environment dependence (no git needed, no "unknown" fallback) and is trivially testable.
+- **Alternatives**: Build-time commit hash (original decision; dropped at the author's request); reading `package.json` (a second place to edit and a JSON import in the bundle); a generated `version.json` (extra step, network or precache concerns).
+- **Superseded**: the original plan used `git rev-parse --short HEAD` with a `GITHUB_SHA` fallback via Vite `define`; that code is removed by tasks T041 to T044.
 
 ## 7. Narrowing the touch zones
 

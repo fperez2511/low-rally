@@ -12,7 +12,7 @@ npm install
 npm run dev
 ```
 
-Open the printed `http://localhost:5173`. Press **Start** in the main menu, then drive one lap. Your ten fastest laps are kept on the device as a leaderboard (open it from the menu or the finish banner). The **Menu** button (or Esc) pauses the game and offers Resume, Restart, Sound on/off, Leaderboard and About (author and build commit).
+Open the printed `http://localhost:5173`. Press **Start** in the main menu, then drive one lap. Your ten fastest laps are kept on the device as a leaderboard (open it from the menu or the finish banner). The **Menu** button (or Esc) pauses the game and offers Resume, Restart, Sound on/off, Leaderboard and About (author and version).
 
 | Input | Steer | Throttle | Brake / reverse | Menu / restart |
 | --- | --- | --- | --- | --- |
@@ -75,7 +75,7 @@ src/
   - *Grip*: lateral velocity is removed by the tyres up to a cap (`gripAccel`). The cap fades with slip angle (the grip curve), so once the car is sideways it keeps sliding until you unwind the wheel; braking while turning cuts rear grip to start a drift; grass scales grip, engine power and drag.
   - *Longitudinal*: engine pull tapers to zero at max speed, plus rolling + quadratic drag; brake slows, then reverses once stopped.
 - **Leaderboard.** `Leaderboard` is a DOM-free model over a `LeaderboardStore` (`localStorage` if usable, otherwise in-memory for the session). Times are stored as `{ v: 1, entries: [{ time, date }] }` under `lowrally.leaderboard.v1`, written once per finished stage after re-reading storage so other tabs' runs are merged. On first load the old single best time (`lowrally.best.v1`) is imported once as an undated entry; the old key is left untouched. Bad or corrupt stored data is dropped entry by entry. Design notes are in `specs/001-persist-leaderboard/`.
-- **Menu and pause.** `GameFlow` (`game/flow.ts`) is a tiny title / playing / paused state machine. Pausing just stops stepping the fixed-timestep simulation, so `Stage.time` (which only advances inside the step) never counts paused time; opening the menu also releases held keys/touches and mutes the engine. Restart asks for confirmation only while the stage clock is running. The sound preference lives under `lowrally.settings.v1`. The About card shows the short git commit baked in at build time (`__APP_COMMIT__`, from `git rev-parse --short HEAD`, then `GITHUB_SHA`, else "unknown"). Design notes are in `specs/002-main-menu/`.
+- **Menu and pause.** `GameFlow` (`game/flow.ts`) is a tiny title / playing / paused state machine. Pausing just stops stepping the fixed-timestep simulation, so `Stage.time` (which only advances inside the step) never counts paused time; opening the menu also releases held keys/touches and mutes the engine. Restart asks for confirmation only while the stage clock is running. The sound preference lives under `lowrally.settings.v1`. The About card shows `AUTHOR` and `VERSION` from `src/config.ts`; bump `VERSION` by hand like any other constant. Design notes are in `specs/002-main-menu/`.
 - **Loop.** Simulation steps at a fixed 60 Hz; rendering interpolates between the last two sim states, so it's smooth at 60/90/120 Hz displays. Pixel ratio is capped at `min(devicePixelRatio, 2)`, MSAA is skipped on ≥2× screens, there are no real-time shadows (blob shadow instead), and the game loop allocates nothing (HUD DOM writes are throttled to 10 Hz and only on change).
 
 ## Scope

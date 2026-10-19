@@ -10,7 +10,7 @@ Replace the "tap anywhere" start overlay and the in-run Restart button with one 
 first run it offers Start; during a run a HUD Menu button (and Escape, and tab-hidden) opens it and
 **freezes the simulation** by simply not stepping it, so run time stays correct without any bookkeeping.
 It also offers Resume, Restart (with a confirmation while a run is in progress), a persisted Sound
-toggle, Leaderboard, and an About card with the author's name and the build's short commit hash.
+toggle, Leaderboard, and an About card with the author's name and the version set in the config.
 Touch steering zones shrink from 50% to 33% of the screen width each. A tiny pure `GameFlow` state
 machine owns title/playing/paused so the rules are unit-testable; the DOM menu, settings and audio are
 thin layers around it. Nothing new runs per frame except one state check.
@@ -41,7 +41,7 @@ thin layers around it. Nothing new runs per frame except one state check.
 
 | Principle | Status | Notes |
 |-----------|--------|-------|
-| I. Mobile-first, installable PWA | PASS | Menu button and options are 44 px touch targets; touch zones are narrowed; menu works offline; layout checked in portrait and landscape. Commit hash is baked in at build time, so no network is needed |
+| I. Mobile-first, installable PWA | PASS | Menu button and options are 44 px touch targets; touch zones are narrowed; menu works offline; layout checked in portrait and landscape. The version is a plain config constant, so no network or build tooling is needed |
 | II. Everything generated in code | PASS | DOM + CSS using palette variables; no assets |
 | III. Performance budget | PASS | Pause = skip the sim step (one branch per frame, no allocation). Menu DOM written only on user actions. `audio.update` returns early when muted. No per-frame DOM writes added |
 | IV. Deterministic single source of truth | PASS | `GameFlow` is the single authority on "is the sim stepping"; the fixed timestep is untouched. Run time is `Stage.time`, which only advances inside the sim step, so pause time cannot leak into it |
@@ -98,8 +98,7 @@ specs/002-main-menu/
 
 ```text
 src/
-├── config.ts                 # + AUTHOR, SETTINGS (key, schemaVersion)
-├── env.d.ts                  # NEW: declare const __APP_COMMIT__: string
+├── config.ts                 # + AUTHOR, VERSION, SETTINGS (key, schemaVersion)
 ├── settings.ts               # NEW: Settings (sound preference), persisted, never throws
 ├── settings.test.ts          # NEW: Vitest
 ├── game/
@@ -118,7 +117,6 @@ src/
 
 index.html                    # #start overlay -> #menu markup; #hud-restart -> #hud-menu
 src/style.css                 # menu card styles; .zone width 33.333%
-vite.config.ts                # define __APP_COMMIT__ (git short hash; GITHUB_SHA fallback; 'unknown')
 README.md                     # controls + "How it works" + trim "Next steps" (menus/pause/settings)
 ```
 

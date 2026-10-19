@@ -38,7 +38,7 @@ Shows:
 
 - Game name
 - "By Fabricio Perez"
-- "Version <short commit>" (or "Version unknown")
+- "Version <VERSION>" where the value is the `VERSION` constant from the game's config
 - **Close** button returning to the main view
 
 ## Rules

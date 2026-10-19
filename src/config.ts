@@ -131,6 +131,9 @@ export const LEADERBOARD = {
 /** Author shown on the About card (see specs/002-main-menu). */
 export const AUTHOR = 'Fabricio Perez';
 
+/** Shown on the About card; bump by hand. */
+export const VERSION = '0.0.2';
+
 /** Persisted player settings (sound on/off). */
 export const SETTINGS = {
   key: 'lowrally.settings.v1',

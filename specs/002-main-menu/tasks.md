@@ -119,7 +119,7 @@ description: "Task list for the main menu feature"
 
 ## Phase 7: User Story 5 - About card (Priority: P3)
 
-**Goal**: The menu has an About view showing the author and the build's short commit hash.
+**Goal**: The menu has an About view showing the author and the version set in `src/config.ts` (amended: originally the build's commit hash, see Phase 9).
 
 **Independent Test**: Quickstart scenario 9.
 
@@ -139,7 +139,20 @@ description: "Task list for the main menu feature"
 - [X] T037 [P] Add `flow` and `menu` to the dev-only `window.__game` handle in `src/main.ts` (inside the existing `import.meta.env.DEV` block)
 - [X] T038 Run `npm test` and `npm run build`; both must pass
 - [ ] T039 Run the full quickstart (scenarios 1 to 14), including the small-screen check at 360x640 and 640x360, the Performance trace on a throttled mobile profile, and the offline PWA check from `npm run build && npm run preview`
-- [ ] T040 Confirm `.github/workflows` deploy build resolves the commit: its `actions/checkout` keeps `.git`, so `git rev-parse --short HEAD` works; if not, ensure `GITHUB_SHA` fallback is used and the About card shows a 7-character hash
+
+---
+
+## Phase 9: Amendment - version from config (US5)
+
+**Context**: Clarified 2026-10-18: the About version is a constant the author edits in `src/config.ts`, not the git commit. This reverses the build-time plumbing from T031 and T032.
+
+- [X] T041 [US5] Add `export const VERSION = '0.0.2';` to `src/config.ts` next to `AUTHOR`, with a doc comment: "Shown on the About card; bump by hand"
+- [X] T042 [US5] In `src/ui/menu.ts` import `VERSION` from `src/config.ts` and set `#about-version` from it instead of `__APP_COMMIT__`
+- [X] T043 [P] [US5] Delete `src/env.d.ts`
+- [X] T044 [P] [US5] In `vite.config.ts` remove `resolveCommit()`, the `define: { __APP_COMMIT__ ... }` entry and the now-unused `node:child_process` import
+- [X] T045 [P] [US5] In `README.md` reword the "Menu and pause" bullet and the Menu sentence near the top: the About card shows the version set in `src/config.ts` (no mention of commit, `git rev-parse` or `GITHUB_SHA`)
+- [X] T046 [US5] Run `npm test` and `npm run build`; then verify quickstart scenario 9 by changing `VERSION` and confirming the About card updates, and that `grep -r APP_COMMIT src vite.config.ts` finds nothing
+- [X] T047 [US5] Keep `package.json` and `package-lock.json` `version` equal to `VERSION` (`0.0.2`) and add `src/version.test.ts` asserting `VERSION === package.json version`, so the two cannot drift
 
 ---
 
@@ -152,7 +165,8 @@ description: "Task list for the main menu feature"
 - **US3 (T022 to T024)** depends only on Foundational and can run any time after it, in parallel with US1, US2, US4 or US5 (it edits `.zone` rules in `src/style.css`, so avoid editing that file concurrently with another story).
 - **US4 (T025 to T030)** depends on US1 (uses `setMuted`) and US2 (menu main view layout); T025 and T026 can start any time after T001.
 - **US5 (T031 to T035)** depends on US1 (menu view structure); T031 and T032 can start any time.
-- **Polish (T036 to T040)** after all stories.
+- **Polish (T036 to T039)** after all stories.
+- **Amendment (T041 to T046)** depends only on US5 already being in place; T041 before T042; T043 to T045 are independent of each other; T046 last.
 
 ## Parallel Opportunities
 
@@ -160,7 +174,7 @@ description: "Task list for the main menu feature"
 - T002 (tests) alongside T001.
 - US3 entirely alongside the menu stories, apart from `src/style.css` conflicts.
 - T025 and T026 (settings), T031 and T032 (version plumbing) alongside any menu work.
-- T036 and T037 in Polish.
+- T036 and T037 in Polish; T043, T044 and T045 in the amendment.
 
 ## Parallel Example: Foundational
 

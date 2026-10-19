@@ -19,7 +19,7 @@ Unit tests: `npm test`. Type-check and production build: `npm run build`.
 6. **Held input release (FR-018)**: Hold a steering key (or finger on a zone), open the menu with Escape (or the Menu button), resume. The car must not keep steering or braking.
 7. **Tab hidden (FR-020)**: During a run switch tabs and come back. Expect the menu open over the paused run.
 8. **Sound (US4)**: Toggle Sound off: engine hum stops and the button reads Off. Resume and drive: silent. Reload: still off. Toggle on: hum returns. Clear site data: defaults to on. With storage blocked, toggling works for the session with no error.
-9. **About (US5)**: Open About. Expect "Fabricio Perez" and a hash equal to `git rev-parse --short HEAD`. Close returns to the menu; paused runs stay paused. Build with no git (`GIT_DIR=/nonexistent npm run build`) and expect "unknown".
+9. **About (US5)**: Open About. Expect "Fabricio Perez" and the `VERSION` value from `src/config.ts`. Edit `VERSION` (e.g. to `0.2.0`), let the dev server reload (or rebuild), and expect the new value; making a commit changes nothing. Close returns to the menu; paused runs stay paused.
 10. **Leaderboard from the menu**: Open it from the menu, press Escape: only the leaderboard closes and the menu stays.
 11. **Touch zones (US3)**: On a touch viewport (portrait and landscape) hold the left third: the car steers left and only that third is tinted. Same for the right third. Touch the middle third (away from Brake): no steering, no tint. Hold a side and Brake together: both work. At rest no side overlay is visible.
 12. **Small screens**: At 360 x 640 portrait and 640 x 360 landscape, every menu view is fully visible or scrollable and all buttons are tappable.

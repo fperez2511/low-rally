@@ -15,6 +15,8 @@
 - Q: Should choosing Restart from the in-run menu ask for confirmation before discarding the run? → A: Yes, always ask "Restart? Yes / No" first.
 - Q: When a lap has already finished, should Restart skip the confirmation? → A: Yes, confirm only while a run is in progress.
 
+- Q (amendment 2026-10-18): Should the About version still be the git commit? → A: No. The version is set by the author as a single constant alongside the other game constants (config), and is no longer derived from the commit.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Open the menu to pause, resume and restart (Priority: P1)
@@ -89,17 +91,17 @@ The menu has a Sound option that toggles all game audio on and off and clearly s
 
 ### User Story 5 - About card (Priority: P3)
 
-The menu has an About option that shows a card with the author's name (Fabricio Perez) and the version of the game, expressed as the short identifier of the source commit it was built from. The card can be closed to return to the menu.
+The menu has an About option that shows a card with the author's name (Fabricio Perez) and the version of the game, a version number the author sets by hand in the game's configuration (like any other constant). The card can be closed to return to the menu.
 
 **Why this priority**: Informational; no effect on gameplay.
 
-**Independent Test**: Open About and confirm the card shows the name and a commit identifier matching the commit the build was made from; close it and confirm the menu is shown again.
+**Independent Test**: Open About and confirm the card shows the name and the version value currently set in the configuration; change that value, rebuild, and confirm the card shows the new value; close it and confirm the menu is shown again.
 
 **Acceptance Scenarios**:
 
-1. **Given** the menu is open, **When** the player chooses About, **Then** a card appears showing the author's name and the version commit identifier.
+1. **Given** the menu is open, **When** the player chooses About, **Then** a card appears showing the author's name and the version set in the configuration.
 2. **Given** the About card is open, **When** the player closes it, **Then** they return to the menu in the same state as before (a paused run stays paused).
-3. **Given** a build made without access to commit information, **When** About is opened, **Then** the card shows a clear placeholder such as "unknown" rather than an error or blank.
+3. **Given** the author changes the version value in the configuration, **When** the game is rebuilt and About is opened, **Then** the card shows the new value; no other step (such as making a commit) is needed or has any effect on it.
 
 ---
 
@@ -128,8 +130,8 @@ The menu has an About option that shows a card with the author's name (Fabricio 
 - **FR-008**: Time spent in the menu MUST NOT count toward the run time recorded for the leaderboard or best time.
 - **FR-009**: The Sound option MUST toggle all game audio on or off and MUST display the current state.
 - **FR-010**: The sound setting MUST persist across visits on the same device and default to on.
-- **FR-011**: The About option MUST show a card containing the author's name, "Fabricio Perez", and the version of the game as the short commit identifier it was built from.
-- **FR-012**: The About card MUST display a readable fallback when commit information is unavailable, and MUST be closable to return to the menu.
+- **FR-011**: The About option MUST show a card containing the author's name, "Fabricio Perez", and the version of the game as defined by a single author-maintained value in the game's configuration, next to the other game constants.
+- **FR-012**: The displayed version MUST NOT depend on source-control information or on the build environment, and the About card MUST be closable to return to the menu.
 - **FR-013**: On touch devices, the left steering area MUST cover only the leftmost third of the screen width, and the right steering area only the rightmost third.
 - **FR-014**: Touches in the middle third of the screen MUST NOT steer and MUST NOT produce any highlight.
 - **FR-015**: The pressed-state highlight for steering MUST be confined to the active strip, and no persistent light overlay may cover half the screen.
@@ -143,7 +145,7 @@ The menu has an About option that shows a card with the author's name (Fabricio 
 
 - **Menu state**: Whether the menu is closed, open before the first run, or open over a paused run; determines which options (Start vs Resume/Restart) are offered.
 - **Sound preference**: The player's on/off choice for audio, stored on the device, default on.
-- **Version info**: The short source-commit identifier of the build, shown on the About card, along with the author's name.
+- **Version info**: The version number the author maintains in the game's configuration, shown on the About card along with the author's name.
 
 ## Success Criteria *(mandatory)*
 
@@ -153,7 +155,7 @@ The menu has an About option that shows a card with the author's name (Fabricio 
 - **SC-002**: 100% of the time the menu is open, the car and run timer do not change.
 - **SC-003**: On a phone, the touch steering highlight covers no more than one third of the screen width at any time, and a touch in the middle third never causes steering.
 - **SC-004**: A player can switch sound off and have it stay off after reloading, in 100% of attempts when local storage is available.
-- **SC-005**: The About card shows the author's name and a commit identifier that matches the build's source commit in every production build.
+- **SC-005**: The About card shows the author's name and exactly the version value set in the configuration in every build, and changing that single value is enough to change what the card shows.
 - **SC-006**: A first-time player can find and use Start, Sound and About without instructions (each reachable in at most two taps from the main menu).
 
 ## Assumptions
@@ -161,7 +163,7 @@ The menu has an About option that shows a card with the author's name (Fabricio 
 - The existing "Tap to start" overlay is replaced by the main menu; Leaderboard stays reachable from the menu, as it is from the start overlay today.
 - Restart is only offered once a run has begun (as Resume/Restart in the in-run menu); the pre-run menu offers Start instead.
 - The author's name displayed on the About card is "Fabricio Perez", taken from the repository's git author.
-- "Version" means the short commit hash of the build; no separate semantic version number is introduced.
+- "Version" is a text value the author edits by hand in the configuration (initially `0.0.2`) and MUST match the project's package manifest version; a test fails if the two differ, so they are bumped together by hand. It is not derived from the commit history.
 - Sound toggle covers all game audio (engine, effects); there is no separate music/effects split.
 - Closing the page's tab or hiding it is treated as an interruption that pauses the run; this is a sensible default not stated in the request.
 - The existing keyboard `R` shortcut for restart is kept when the menu is closed.

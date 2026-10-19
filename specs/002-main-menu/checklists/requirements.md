@@ -31,4 +31,5 @@
 
 ## Notes
 
-- All items pass on the first validation iteration. Reasonable defaults are recorded in the spec's Assumptions section.
+- Re-validated 2026-10-18 after the version amendment: all items still pass (version now comes from the config, not the commit).
+- All items passed on the first validation iteration. Reasonable defaults are recorded in the spec's Assumptions section.
