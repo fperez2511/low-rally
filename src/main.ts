@@ -14,6 +14,7 @@ import { CameraRig } from './car/camera';
 import { CarController } from './car/controller';
 import { CarModel } from './car/model';
 import { BEST_TIME_KEY, CAR, FOG, PALETTE, RENDER, SIM, shade } from './config';
+import { GameFlow } from './game/flow';
 import { KeyboardInput } from './input/keyboard';
 import { isTouchDevice, TouchInput } from './input/touch';
 import { Leaderboard } from './leaderboard/leaderboard';
@@ -21,7 +22,8 @@ import { createStore } from './leaderboard/store';
 import { createInputState, mergeInputs, type InputSource } from './input/types';
 import { Hud, formatTime } from './ui/hud';
 import { LeaderboardView } from './ui/leaderboardView';
-import { showStartScreen } from './ui/startScreen';
+import { createSettings } from './settings';
+import { MenuView } from './ui/menu';
 import { applyPaletteCssVars } from './ui/theme';
 import { Stage } from './stage';
 import { World } from './world/world';
@@ -59,16 +61,17 @@ const carModel = new CarModel();
 scene.add(carModel.root);
 const rig = new CameraRig(camera, ground);
 
-const hud = new Hud(() => restart());
+const hud = new Hud(() => openMenu());
 const audio = new EngineAudio();
 
 // ---------- input ----------
-const sources: InputSource[] = [new KeyboardInput(() => restart(), () => leaderboardView.isOpen)];
+const flow = new GameFlow();
+const settings = createSettings();
+const sources: InputSource[] = [new KeyboardInput(() => leaderboardView.isOpen || !flow.isStepping)];
 if (isTouchDevice()) sources.push(new TouchInput(document.getElementById('touch')!));
 const input = createInputState();
 
 // ---------- state ----------
-let started = false;
 let announced = false; // finish banner shown for this run
 
 function restart(): void {
@@ -91,18 +94,76 @@ window.addEventListener('resize', onResize);
 onResize();
 restart();
 
-document.getElementById('start-lb')!.addEventListener('pointerdown', (e) => e.stopPropagation()); // don't start the run
-document.getElementById('start-lb')!.addEventListener('click', () => leaderboardView.open(null));
-document.getElementById('banner-lb')!.addEventListener('click', () => leaderboardView.open(stage.lastRank));
-
-showStartScreen(
-  () => {
-    started = true;
-    audio.unlock();
+// ---------- menu / pause ----------
+const menu = new MenuView({
+  onStart: () => {
+    if (!flow.start()) return;
+    audio.unlock(); // the click is the user gesture iOS needs
     hud.show();
+    applyMute();
+    menu.close();
   },
-  () => leaderboardView.isOpen,
-);
+  onResume: () => resume(),
+  onRestart: () => (flow.needsRestartConfirm(stage.state) ? menu.showConfirm() : doRestart()),
+  onRestartConfirmed: () => doRestart(),
+  onToggleSound: () => {
+    settings.setSoundOn(!settings.soundOn);
+    menu.setSound(settings.soundOn);
+    applyMute();
+  },
+  onLeaderboard: () => leaderboardView.open(null),
+});
+menu.setSound(settings.soundOn);
+menu.openTitle();
+
+function applyMute(): void {
+  audio.setMuted(!settings.soundOn || !flow.isStepping);
+}
+
+/** Freeze the sim and drop held inputs; returns false if there was nothing to pause. */
+function pause(): boolean {
+  if (!flow.pause()) return false;
+  sources.forEach((s) => s.release());
+  applyMute();
+  return true;
+}
+
+function openMenu(): void {
+  if (pause()) menu.openPaused();
+}
+
+function resume(): void {
+  if (!flow.resume()) return;
+  applyMute();
+  menu.close();
+}
+
+function doRestart(): void {
+  restart();
+  flow.restart();
+  applyMute();
+  menu.close();
+}
+
+window.addEventListener('keydown', (e) => {
+  if (e.defaultPrevented || !flow.isStepping || leaderboardView.isOpen) return;
+  if (e.code === 'Escape') {
+    e.preventDefault();
+    openMenu();
+  } else if (e.code === 'KeyR' && !e.repeat && !e.metaKey && !e.ctrlKey && !e.altKey) {
+    if (flow.needsRestartConfirm(stage.state)) {
+      openMenu();
+      menu.showConfirm();
+    } else {
+      restart();
+    }
+  }
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) openMenu();
+});
+
+document.getElementById('banner-lb')!.addEventListener('click', () => leaderboardView.open(stage.lastRank));
 
 // ---------- loop: fixed 60 Hz simulation, render every animation frame ----------
 let last = performance.now();
@@ -115,7 +176,7 @@ function frame(now: number): void {
   last = now;
   if (dt > SIM.maxFrame) dt = SIM.maxFrame;
 
-  if (started) {
+  if (flow.isStepping) {
     acc += dt;
     let steps = 0;
     while (acc >= SIM.dt && steps < SIM.maxSteps) {
@@ -129,7 +190,7 @@ function frame(now: number): void {
   }
 
   // Interpolate between the last two sim states so motion stays smooth on any refresh rate.
-  const alpha = started ? acc / SIM.dt : 0;
+  const alpha = acc / SIM.dt; // acc is frozen while paused, so the car holds its pose
   carModel.update(car, alpha, dt);
   const p = carModel.root.position;
   rig.update(car, p.x, p.y, p.z, dt);
@@ -154,7 +215,7 @@ requestAnimationFrame(frame);
 
 // Dev-only handle for poking at the game from the console / automated checks.
 if (import.meta.env.DEV) {
-  (window as unknown as Record<string, unknown>).__game = { car, stage, board, ground, sources, restart, renderer };
+  (window as unknown as Record<string, unknown>).__game = { car, stage, board, ground, sources, restart, renderer, flow, menu };
 }
 
 /** The single best time kept by earlier versions; read once so the leaderboard can import it. */

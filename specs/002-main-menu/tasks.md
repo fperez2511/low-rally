@@ -29,7 +29,7 @@ description: "Task list for the main menu feature"
 
 ## Phase 1: Setup
 
-- [ ] T001 Add constants to `src/config.ts`: `AUTHOR = 'Fabricio Perez'` and `SETTINGS = { key: 'lowrally.settings.v1', schemaVersion: 1 }` (with a doc comment pointing to `specs/002-main-menu`)
+- [X] T001 Add constants to `src/config.ts`: `AUTHOR = 'Fabricio Perez'` and `SETTINGS = { key: 'lowrally.settings.v1', schemaVersion: 1 }` (with a doc comment pointing to `specs/002-main-menu`)
 
 **Checkpoint**: `npm run typecheck` passes.
 
@@ -39,12 +39,12 @@ description: "Task list for the main menu feature"
 
 **Purpose**: The pure flow state machine, the input `release()` contract, and replacing `started` in `main.ts` with it. After this phase the game plays exactly as before.
 
-- [ ] T002 [P] Write failing tests in `src/game/flow.test.ts` for `GameFlow` per `data-model.md`: initial state is `title`; `start()` moves `title` to `playing`; `pause()` moves `playing` to `paused`; `resume()` and `restart()` move `paused` to `playing`; every other transition is ignored and returns `false` (e.g. `pause()` in `title`, `resume()` in `playing`, a second `start()`); each legal transition returns `true`; `needsRestartConfirm` is `true` only for `'running'` and `false` for `'armed'` and `'finished'`; `isStepping` is `true` only in `playing`
-- [ ] T003 Create `src/game/flow.ts` (State pattern, DOM-free, no allocation): export `type FlowState = 'title' | 'playing' | 'paused'`, `class GameFlow` with a `state` field, methods `start()`, `pause()`, `resume()`, `restart()` returning `boolean` (true if the transition happened), a getter `isStepping`, and `needsRestartConfirm(stage: StageState): boolean` (import `StageState` from `src/stage.ts`) returning `true` only for `'running'`. Make T002 pass with `npm test`
-- [ ] T004 Add `release(): void` to the `InputSource` interface in `src/input/types.ts` with the doc comment "Drop any held input (menu opened, page hidden)"
-- [ ] T005 [P] Implement `release()` in `src/input/keyboard.ts`: clear the `down` set and call `refresh()`; reuse it from the existing `onBlur` handler
-- [ ] T006 [P] Implement `release()` in `src/input/touch.ts`: clear the `pointers` map, remove the `active` class from every `.zone` and `#touch-brake`, then call `refresh()`
-- [ ] T007 In `src/main.ts` replace the `started` boolean with a `GameFlow` instance: the sim step loop runs only when `flow.isStepping`; the `showStartScreen` callback calls `flow.start()`; the `alpha` interpolation uses `flow.isStepping`; add helper functions `pause()` (calls `flow.pause()` and, if it returned true, `source.release()` on every input source) and `resume()` (calls `flow.resume()`); pass `() => leaderboardView.isOpen || !flow.isStepping` as the `KeyboardInput` suspended callback. Behaviour for the player is unchanged
+- [X] T002 [P] Write failing tests in `src/game/flow.test.ts` for `GameFlow` per `data-model.md`: initial state is `title`; `start()` moves `title` to `playing`; `pause()` moves `playing` to `paused`; `resume()` and `restart()` move `paused` to `playing`; every other transition is ignored and returns `false` (e.g. `pause()` in `title`, `resume()` in `playing`, a second `start()`); each legal transition returns `true`; `needsRestartConfirm` is `true` only for `'running'` and `false` for `'armed'` and `'finished'`; `isStepping` is `true` only in `playing`
+- [X] T003 Create `src/game/flow.ts` (State pattern, DOM-free, no allocation): export `type FlowState = 'title' | 'playing' | 'paused'`, `class GameFlow` with a `state` field, methods `start()`, `pause()`, `resume()`, `restart()` returning `boolean` (true if the transition happened), a getter `isStepping`, and `needsRestartConfirm(stage: StageState): boolean` (import `StageState` from `src/stage.ts`) returning `true` only for `'running'`. Make T002 pass with `npm test`
+- [X] T004 Add `release(): void` to the `InputSource` interface in `src/input/types.ts` with the doc comment "Drop any held input (menu opened, page hidden)"
+- [X] T005 [P] Implement `release()` in `src/input/keyboard.ts`: clear the `down` set and call `refresh()`; reuse it from the existing `onBlur` handler
+- [X] T006 [P] Implement `release()` in `src/input/touch.ts`: clear the `pointers` map, remove the `active` class from every `.zone` and `#touch-brake`, then call `refresh()`
+- [X] T007 In `src/main.ts` replace the `started` boolean with a `GameFlow` instance: the sim step loop runs only when `flow.isStepping`; the `showStartScreen` callback calls `flow.start()`; the `alpha` interpolation uses `flow.isStepping`; add helper functions `pause()` (calls `flow.pause()` and, if it returned true, `source.release()` on every input source) and `resume()` (calls `flow.resume()`); pass `() => leaderboardView.isOpen || !flow.isStepping` as the `KeyboardInput` suspended callback. Behaviour for the player is unchanged
 
 **Checkpoint**: `npm test`, `npm run typecheck` and `npm run dev` pass; the game starts and plays as before.
 
@@ -56,14 +56,14 @@ description: "Task list for the main menu feature"
 
 **Independent Test**: Quickstart scenarios 2 to 7. Start a run, open Menu, wait, Resume: timer and car continue unchanged. Restart mid-run asks for confirmation; before the start line or after finishing it does not.
 
-- [ ] T008 [US1] In `index.html` replace `<button id="hud-restart">Restart</button>` with `<button id="hud-menu" type="button" aria-haspopup="dialog">Menu</button>`, and add a hidden `<div id="menu" hidden role="dialog" aria-modal="true" aria-labelledby="menu-title">` containing a card with two views per `contracts/menu-ui.md`: `#menu-main` (`<h2 id="menu-title">Paused</h2>`, buttons `#menu-resume` "Resume" and `#menu-restart` "Restart") and `#menu-confirm` (hidden; text "Restart?", buttons `#menu-confirm-no` "No" and `#menu-confirm-yes` "Yes")
-- [ ] T009 [US1] In `src/style.css` rename the `#hud-restart` rules to `#hud-menu` (same position) and add `#menu` styles: fixed full-screen overlay at `z-index: 20` (above `#hud` 10 and `#touch` 5, below `#leaderboard` 30), dimmed background using the existing rgba palette values, centred card reusing the `.lb-card` look, `.menu-btn` buttons based on `.lb-btn` with `min-height: 44px` and a vertical stack with gap, card `max-height: 100%` with `overflow-y: auto` so it scrolls on short landscape phones, safe-area padding like `#leaderboard`
-- [ ] T010 [US1] Update `src/ui/hud.ts`: the constructor takes `onMenu: () => void`, binds the `#hud-menu` button click (preventDefault, call `onMenu`, then `blur()` as the current Restart button does)
-- [ ] T011 [US1] Create `src/ui/menu.ts` (Facade + Command): export `interface MenuActions { onResume(): void; onRestart(): void; onRestartConfirmed(): void }` and `class MenuView` with `isOpen` getter, `openPaused()`, `showConfirm()`, `close()`. It toggles `hidden` on `#menu`, `#menu-main` and `#menu-confirm`, moves focus (Resume on main, "No" on confirm), remembers nothing else, and handles `Escape` on `window` keydown per `contracts/menu-ui.md`: ignore if `e.defaultPrevented` or the menu is closed; on the confirm view go back to main; on main call `onResume`. No DOM writes outside user actions
-- [ ] T012 [US1] In `src/ui/leaderboardView.ts` make the existing Escape handler call `e.preventDefault()` when it closes the dialog, so the menu's Escape handler (which ignores `defaultPrevented` events) leaves the menu open
-- [ ] T013 [US1] Add `setMuted(muted: boolean)` to `src/audio.ts`: stores the flag and sets the gain to 0 when muted; make `update()` return early while muted (so the gain is not rewritten) and apply the normal gain again when unmuted
-- [ ] T014 [US1] Wire the pause flow in `src/main.ts`: create `MenuView` with `onResume` (resume, close menu), `onRestart` (if `flow.needsRestartConfirm(stage.state)` call `menu.showConfirm()`, otherwise call `doRestart()`) and `onRestartConfirmed` (`doRestart()`); `doRestart()` calls the existing `restart()`, then `flow.restart()`, then `menu.close()`; pass `() => openMenu()` to `Hud` where `openMenu()` calls `pause()` then `menu.openPaused()`; call `audio.setMuted(!flow.isStepping)` after every flow change (pause, resume, restart); add a `window` keydown handler: `Escape` while `flow.isStepping` and the leaderboard is closed calls `openMenu()`; the `KeyR` key (non-repeat) while `flow.isStepping`: if `flow.needsRestartConfirm(stage.state)` then `openMenu()` followed by `menu.showConfirm()`, otherwise `doRestart()`; add a `document` `visibilitychange` listener that calls `openMenu()` when hidden and `flow.isStepping`. Remove the `onRestart` argument from the `KeyboardInput` construction and drop the `onRestart` handling (`KeyR` branch and constructor parameter) from `src/input/keyboard.ts`
-- [ ] T015 [US1] Manually verify quickstart scenarios 2 to 7 on `npm run dev`; confirm the timer excludes paused time by finishing a lap after a long pause and checking the leaderboard entry
+- [X] T008 [US1] In `index.html` replace `<button id="hud-restart">Restart</button>` with `<button id="hud-menu" type="button" aria-haspopup="dialog">Menu</button>`, and add a hidden `<div id="menu" hidden role="dialog" aria-modal="true" aria-labelledby="menu-title">` containing a card with two views per `contracts/menu-ui.md`: `#menu-main` (`<h2 id="menu-title">Paused</h2>`, buttons `#menu-resume` "Resume" and `#menu-restart` "Restart") and `#menu-confirm` (hidden; text "Restart?", buttons `#menu-confirm-no` "No" and `#menu-confirm-yes` "Yes")
+- [X] T009 [US1] In `src/style.css` rename the `#hud-restart` rules to `#hud-menu` (same position) and add `#menu` styles: fixed full-screen overlay at `z-index: 20` (above `#hud` 10 and `#touch` 5, below `#leaderboard` 30), dimmed background using the existing rgba palette values, centred card reusing the `.lb-card` look, `.menu-btn` buttons based on `.lb-btn` with `min-height: 44px` and a vertical stack with gap, card `max-height: 100%` with `overflow-y: auto` so it scrolls on short landscape phones, safe-area padding like `#leaderboard`
+- [X] T010 [US1] Update `src/ui/hud.ts`: the constructor takes `onMenu: () => void`, binds the `#hud-menu` button click (preventDefault, call `onMenu`, then `blur()` as the current Restart button does)
+- [X] T011 [US1] Create `src/ui/menu.ts` (Facade + Command): export `interface MenuActions { onResume(): void; onRestart(): void; onRestartConfirmed(): void }` and `class MenuView` with `isOpen` getter, `openPaused()`, `showConfirm()`, `close()`. It toggles `hidden` on `#menu`, `#menu-main` and `#menu-confirm`, moves focus (Resume on main, "No" on confirm), remembers nothing else, and handles `Escape` on `window` keydown per `contracts/menu-ui.md`: ignore if `e.defaultPrevented` or the menu is closed; on the confirm view go back to main; on main call `onResume`. No DOM writes outside user actions
+- [X] T012 [US1] In `src/ui/leaderboardView.ts` make the existing Escape handler call `e.preventDefault()` when it closes the dialog, so the menu's Escape handler (which ignores `defaultPrevented` events) leaves the menu open
+- [X] T013 [US1] Add `setMuted(muted: boolean)` to `src/audio.ts`: stores the flag and sets the gain to 0 when muted; make `update()` return early while muted (so the gain is not rewritten) and apply the normal gain again when unmuted
+- [X] T014 [US1] Wire the pause flow in `src/main.ts`: create `MenuView` with `onResume` (resume, close menu), `onRestart` (if `flow.needsRestartConfirm(stage.state)` call `menu.showConfirm()`, otherwise call `doRestart()`) and `onRestartConfirmed` (`doRestart()`); `doRestart()` calls the existing `restart()`, then `flow.restart()`, then `menu.close()`; pass `() => openMenu()` to `Hud` where `openMenu()` calls `pause()` then `menu.openPaused()`; call `audio.setMuted(!flow.isStepping)` after every flow change (pause, resume, restart); add a `window` keydown handler: `Escape` while `flow.isStepping` and the leaderboard is closed calls `openMenu()`; the `KeyR` key (non-repeat) while `flow.isStepping`: if `flow.needsRestartConfirm(stage.state)` then `openMenu()` followed by `menu.showConfirm()`, otherwise `doRestart()`; add a `document` `visibilitychange` listener that calls `openMenu()` when hidden and `flow.isStepping`. Remove the `onRestart` argument from the `KeyboardInput` construction and drop the `onRestart` handling (`KeyR` branch and constructor parameter) from `src/input/keyboard.ts`
+- [X] T015 [US1] Manually verify quickstart scenarios 2 to 7 on `npm run dev`; confirm the timer excludes paused time by finishing a lap after a long pause and checking the leaderboard entry
 
 **Checkpoint**: User Story 1 works on its own (the old tap-to-start overlay still starts the game). This is the MVP.
 
@@ -75,12 +75,12 @@ description: "Task list for the main menu feature"
 
 **Independent Test**: Quickstart scenarios 1 and 10. Load the page: the menu shows Start and Leaderboard; clicking elsewhere or pressing random keys does nothing; Start begins the run and unlocks audio.
 
-- [ ] T016 [US2] In `index.html` delete the `#start` overlay and extend the `#menu` card: add a title block `<h1 id="menu-heading">Low Rally</h1>` shown in title mode, a `#menu-start` "Start" button, a `#menu-leaderboard` "Leaderboard" button (shown in both modes), and the controls help text currently in `.start-help` (touch and keyboard hints; keyboard hint says "Esc for menu, R to restart")
-- [ ] T017 [US2] In `src/style.css` remove the `#start`, `.start-cta`, `.start-help` pulse-animation rules and `#start-lb` rule; add equivalents under `#menu` for the heading (reuse the old `#start h1` styling) and the help text
-- [ ] T018 [US2] Extend `src/ui/menu.ts`: add `onStart(): void` and `onLeaderboard(): void` to `MenuActions`; add `openTitle()` (shows Start, Leaderboard and the title heading, hides Resume and Restart, focuses Start); make `openPaused()` hide Start and the heading and show Resume, Restart and Leaderboard; ignore Escape in title mode; clicks on the dimmed area outside the card do nothing
-- [ ] T019 [US2] Update `src/main.ts`: remove the `showStartScreen` call and the `#start-lb` listeners; call `menu.openTitle()` at startup; `onStart` calls `flow.start()`, `audio.unlock()`, `hud.show()`, `audio.setMuted(false)` and `menu.close()`; `onLeaderboard` calls `leaderboardView.open(null)`; keep the finish-banner leaderboard button listener
-- [ ] T020 [US2] Delete `src/ui/startScreen.ts` and remove its import from `src/main.ts`
-- [ ] T021 [US2] Manually verify quickstart scenarios 1 and 10 and that a keyboard-only player can start with Enter or Space
+- [X] T016 [US2] In `index.html` delete the `#start` overlay and extend the `#menu` card: add a title block `<h1 id="menu-heading">Low Rally</h1>` shown in title mode, a `#menu-start` "Start" button, a `#menu-leaderboard` "Leaderboard" button (shown in both modes), and the controls help text currently in `.start-help` (touch and keyboard hints; keyboard hint says "Esc for menu, R to restart")
+- [X] T017 [US2] In `src/style.css` remove the `#start`, `.start-cta`, `.start-help` pulse-animation rules and `#start-lb` rule; add equivalents under `#menu` for the heading (reuse the old `#start h1` styling) and the help text
+- [X] T018 [US2] Extend `src/ui/menu.ts`: add `onStart(): void` and `onLeaderboard(): void` to `MenuActions`; add `openTitle()` (shows Start, Leaderboard and the title heading, hides Resume and Restart, focuses Start); make `openPaused()` hide Start and the heading and show Resume, Restart and Leaderboard; ignore Escape in title mode; clicks on the dimmed area outside the card do nothing
+- [X] T019 [US2] Update `src/main.ts`: remove the `showStartScreen` call and the `#start-lb` listeners; call `menu.openTitle()` at startup; `onStart` calls `flow.start()`, `audio.unlock()`, `hud.show()`, `audio.setMuted(false)` and `menu.close()`; `onLeaderboard` calls `leaderboardView.open(null)`; keep the finish-banner leaderboard button listener
+- [X] T020 [US2] Delete `src/ui/startScreen.ts` and remove its import from `src/main.ts`
+- [X] T021 [US2] Manually verify quickstart scenarios 1 and 10 and that a keyboard-only player can start with Enter or Space
 
 **Checkpoint**: User Stories 1 and 2 both work; the menu is the single front door.
 
@@ -92,9 +92,9 @@ description: "Task list for the main menu feature"
 
 **Independent Test**: Quickstart scenario 11 on a touch viewport.
 
-- [ ] T022 [US3] In `src/style.css` change `.zone` from `width: 50%` to `width: 33.333%`; confirm `.zone-left` and `.zone-right` stay anchored to their edges, that `.zone.active` background and the chevron opacity apply only to the narrower strip, and that no other rule tints the middle of the screen
-- [ ] T023 [P] [US3] Update the doc comment in `src/input/touch.ts` ("Left/right screen thirds steer ...") and the touch hint in `index.html` help text to "hold the left or right edge to steer" (keep the brake hint)
-- [ ] T024 [US3] Verify quickstart scenario 11 with the Browser pane in the mobile preset (portrait and landscape): a touch in the left or right third steers and tints only that third, the middle third does nothing, steering plus brake works together, and nothing is tinted at rest
+- [X] T022 [US3] In `src/style.css` change `.zone` from `width: 50%` to `width: 33.333%`; confirm `.zone-left` and `.zone-right` stay anchored to their edges, that `.zone.active` background and the chevron opacity apply only to the narrower strip, and that no other rule tints the middle of the screen
+- [X] T023 [P] [US3] Update the doc comment in `src/input/touch.ts` ("Left/right screen thirds steer ...") and the touch hint in `index.html` help text to "hold the left or right edge to steer" (keep the brake hint)
+- [X] T024 [US3] Verify quickstart scenario 11 with the Browser pane in the mobile preset (portrait and landscape): a touch in the left or right third steers and tints only that third, the middle third does nothing, steering plus brake works together, and nothing is tinted at rest
 
 **Checkpoint**: User Story 3 works independently of the menu.
 
@@ -106,12 +106,12 @@ description: "Task list for the main menu feature"
 
 **Independent Test**: Quickstart scenario 8.
 
-- [ ] T025 [P] [US4] Write failing tests in `src/settings.test.ts` for `Settings` per `contracts/settings-format.md`: default `soundOn` is `true`; setting `false` persists and a new `Settings` over the same storage reads `false`; stored `{"v":1,"sound":"yes"}`, a wrong `v`, unparseable JSON and a missing key all resolve to `true`; a storage whose `getItem` and `setItem` throw never throws and keeps the value in memory for the session. Make the constructor accept a minimal `Pick<Storage, 'getItem' | 'setItem'> | null` so tests can pass a stub
-- [ ] T026 [US4] Create `src/settings.ts` (Adapter): `class Settings` with `soundOn` getter and `setSoundOn(on: boolean)`, reading once in the constructor and writing `{ "v": 1, "sound": <boolean> }` under `SETTINGS.key` from `src/config.ts`; "Anything other than `true`/`false` is treated as absent (default `true`)"; every storage access in `try/catch`; add `createSettings()` that passes `window.localStorage` (or `null` if accessing it throws). Make T025 pass with `npm test`
-- [ ] T027 [US4] In `index.html` add a `#menu-sound` button to the menu's main view (shown in both modes) with `aria-pressed` and visible text "Sound: On" / "Sound: Off"
-- [ ] T028 [US4] Extend `src/ui/menu.ts`: add `onToggleSound(): void` to `MenuActions`, bind `#menu-sound`, and add `setSound(on: boolean)` updating the label and `aria-pressed`
-- [ ] T029 [US4] Update `src/main.ts`: create `Settings` via `createSettings()`; call `menu.setSound(settings.soundOn)` at startup; `onToggleSound` flips and saves the setting, updates the menu label and re-applies mute; replace the mute computation everywhere with one `applyMute()` function: `audio.setMuted(!settings.soundOn || !flow.isStepping)`
-- [ ] T030 [US4] Manually verify quickstart scenario 8, including a reload and a private window
+- [X] T025 [P] [US4] Write failing tests in `src/settings.test.ts` for `Settings` per `contracts/settings-format.md`: default `soundOn` is `true`; setting `false` persists and a new `Settings` over the same storage reads `false`; stored `{"v":1,"sound":"yes"}`, a wrong `v`, unparseable JSON and a missing key all resolve to `true`; a storage whose `getItem` and `setItem` throw never throws and keeps the value in memory for the session. Make the constructor accept a minimal `Pick<Storage, 'getItem' | 'setItem'> | null` so tests can pass a stub
+- [X] T026 [US4] Create `src/settings.ts` (Adapter): `class Settings` with `soundOn` getter and `setSoundOn(on: boolean)`, reading once in the constructor and writing `{ "v": 1, "sound": <boolean> }` under `SETTINGS.key` from `src/config.ts`; "Anything other than `true`/`false` is treated as absent (default `true`)"; every storage access in `try/catch`; add `createSettings()` that passes `window.localStorage` (or `null` if accessing it throws). Make T025 pass with `npm test`
+- [X] T027 [US4] In `index.html` add a `#menu-sound` button to the menu's main view (shown in both modes) with `aria-pressed` and visible text "Sound: On" / "Sound: Off"
+- [X] T028 [US4] Extend `src/ui/menu.ts`: add `onToggleSound(): void` to `MenuActions`, bind `#menu-sound`, and add `setSound(on: boolean)` updating the label and `aria-pressed`
+- [X] T029 [US4] Update `src/main.ts`: create `Settings` via `createSettings()`; call `menu.setSound(settings.soundOn)` at startup; `onToggleSound` flips and saves the setting, updates the menu label and re-applies mute; replace the mute computation everywhere with one `applyMute()` function: `audio.setMuted(!settings.soundOn || !flow.isStepping)`
+- [X] T030 [US4] Manually verify quickstart scenario 8, including a reload and a private window
 
 **Checkpoint**: User Story 4 works independently.
 
@@ -123,11 +123,11 @@ description: "Task list for the main menu feature"
 
 **Independent Test**: Quickstart scenario 9.
 
-- [ ] T031 [P] [US5] Create `src/env.d.ts` with `declare const __APP_COMMIT__: string;`
-- [ ] T032 [P] [US5] In `vite.config.ts` resolve the commit and add `define: { __APP_COMMIT__: JSON.stringify(commit) }`: `execSync('git rev-parse --short HEAD')` inside `try/catch` (stdio piped so errors are silent), falling back to `process.env.GITHUB_SHA?.slice(0, 7)`, then `'unknown'`
-- [ ] T033 [US5] In `index.html` add an `#menu-about-btn` "About" button to the main view and a hidden `#menu-about` view containing the game name, `By <span id="about-author"></span>`, `Version <span id="about-version"></span>` and a `#menu-about-close` "Close" button
-- [ ] T034 [US5] Extend `src/ui/menu.ts`: bind About and Close, add `showAbout()` and a back-to-main path (Escape on About returns to the main view; focus Close when shown, About button when returning); fill `#about-author` from `AUTHOR` in `src/config.ts` and `#about-version` from `__APP_COMMIT__` once in the constructor; the paused run stays paused throughout
-- [ ] T035 [US5] Manually verify quickstart scenario 9: the displayed hash equals `git rev-parse --short HEAD`, Close returns to the menu, and a build without git shows "unknown"
+- [X] T031 [P] [US5] Create `src/env.d.ts` with `declare const __APP_COMMIT__: string;`
+- [X] T032 [P] [US5] In `vite.config.ts` resolve the commit and add `define: { __APP_COMMIT__: JSON.stringify(commit) }`: `execSync('git rev-parse --short HEAD')` inside `try/catch` (stdio piped so errors are silent), falling back to `process.env.GITHUB_SHA?.slice(0, 7)`, then `'unknown'`
+- [X] T033 [US5] In `index.html` add an `#menu-about-btn` "About" button to the main view and a hidden `#menu-about` view containing the game name, `By <span id="about-author"></span>`, `Version <span id="about-version"></span>` and a `#menu-about-close` "Close" button
+- [X] T034 [US5] Extend `src/ui/menu.ts`: bind About and Close, add `showAbout()` and a back-to-main path (Escape on About returns to the main view; focus Close when shown, About button when returning); fill `#about-author` from `AUTHOR` in `src/config.ts` and `#about-version` from `__APP_COMMIT__` once in the constructor; the paused run stays paused throughout
+- [X] T035 [US5] Manually verify quickstart scenario 9: the displayed hash equals `git rev-parse --short HEAD`, Close returns to the menu, and a build without git shows "unknown"
 
 **Checkpoint**: All five user stories work independently.
 
@@ -135,9 +135,9 @@ description: "Task list for the main menu feature"
 
 ## Phase 8: Polish & Cross-Cutting
 
-- [ ] T036 [P] Update `README.md`: controls (Menu button, Esc, R with confirmation, edge steering), a short "How it works" paragraph on pause (sim not stepped, `Stage.time` unaffected) and on the build-time commit, and remove "Menus: ..., pause" from "Next steps (deliberately not built)" leaving stage select, car select as the unbuilt items
-- [ ] T037 [P] Add `flow` and `menu` to the dev-only `window.__game` handle in `src/main.ts` (inside the existing `import.meta.env.DEV` block)
-- [ ] T038 Run `npm test` and `npm run build`; both must pass
+- [X] T036 [P] Update `README.md`: controls (Menu button, Esc, R with confirmation, edge steering), a short "How it works" paragraph on pause (sim not stepped, `Stage.time` unaffected) and on the build-time commit, and remove "Menus: ..., pause" from "Next steps (deliberately not built)" leaving stage select, car select as the unbuilt items
+- [X] T037 [P] Add `flow` and `menu` to the dev-only `window.__game` handle in `src/main.ts` (inside the existing `import.meta.env.DEV` block)
+- [X] T038 Run `npm test` and `npm run build`; both must pass
 - [ ] T039 Run the full quickstart (scenarios 1 to 14), including the small-screen check at 360x640 and 640x360, the Performance trace on a throttled mobile profile, and the offline PWA check from `npm run build && npm run preview`
 - [ ] T040 Confirm `.github/workflows` deploy build resolves the commit: its `actions/checkout` keeps `.git`, so `git rev-parse --short HEAD` works; if not, ensure `GITHUB_SHA` fallback is used and the About card shows a 7-character hash
 

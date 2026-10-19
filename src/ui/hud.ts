@@ -21,11 +21,11 @@ export class Hud {
   private lastTime = '';
   private lastBest = '';
 
-  constructor(onRestart: () => void) {
-    const btn = document.getElementById('hud-restart')!;
+  constructor(onMenu: () => void) {
+    const btn = document.getElementById('hud-menu')!;
     btn.addEventListener('click', (e) => {
       e.preventDefault();
-      onRestart();
+      onMenu();
       btn.blur(); // keep Space/Enter from re-triggering the button
     });
   }

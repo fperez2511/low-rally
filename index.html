@@ -30,7 +30,7 @@
         <span class="hud-label">Best</span>
         <span class="hud-value" id="hud-best">--:--.--</span>
       </div>
-      <button id="hud-restart" type="button">Restart</button>
+      <button id="hud-menu" type="button" aria-haspopup="dialog">Menu</button>
     </div>
 
     <div id="banner" hidden></div>
@@ -54,14 +54,40 @@
       <div class="brake-btn" id="touch-brake">Brake</div>
     </div>
 
-    <div id="start">
-      <h1>Low Rally</h1>
-      <p class="start-cta">Tap to start</p>
-      <button id="start-lb" class="lb-btn" type="button">Leaderboard</button>
-      <p class="start-help">
-        Touch: hold left / right side to steer, brake button to slow down.<br />
-        Keyboard: arrows or WASD, space to brake, R to restart.
-      </p>
+    <div id="menu" role="dialog" aria-modal="true" aria-labelledby="menu-title">
+      <div class="menu-card">
+        <h1 id="menu-heading">Low Rally</h1>
+
+        <div id="menu-main" class="menu-view">
+          <h2 id="menu-title">Menu</h2>
+          <button id="menu-start" class="menu-btn menu-btn-primary" type="button">Start</button>
+          <button id="menu-resume" class="menu-btn menu-btn-primary" type="button">Resume</button>
+          <button id="menu-restart" class="menu-btn" type="button">Restart</button>
+          <button id="menu-sound" class="menu-btn" type="button" aria-pressed="true">Sound: On</button>
+          <button id="menu-leaderboard" class="menu-btn" type="button">Leaderboard</button>
+          <button id="menu-about-btn" class="menu-btn" type="button">About</button>
+          <p class="menu-help">
+            Touch: hold the left or right edge to steer, brake button to slow down.<br />
+            Keyboard: arrows or WASD, space to brake, R to restart, Esc for menu.
+          </p>
+        </div>
+
+        <div id="menu-confirm" class="menu-view" hidden>
+          <h2>Restart?</h2>
+          <p class="menu-note">Your current run will be lost.</p>
+          <div class="menu-row">
+            <button id="menu-confirm-no" class="menu-btn" type="button">No</button>
+            <button id="menu-confirm-yes" class="menu-btn menu-btn-primary" type="button">Yes</button>
+          </div>
+        </div>
+
+        <div id="menu-about" class="menu-view" hidden>
+          <h2>About</h2>
+          <p class="menu-note">By <span id="about-author"></span></p>
+          <p class="menu-note">Version <span id="about-version"></span></p>
+          <button id="menu-about-close" class="menu-btn menu-btn-primary" type="button">Close</button>
+        </div>
+      </div>
     </div>
 
     <script type="module" src="/src/main.ts"></script>

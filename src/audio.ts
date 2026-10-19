@@ -6,6 +6,7 @@ export class EngineAudio {
   private ctx: AudioContext | null = null;
   private osc: OscillatorNode | null = null;
   private gain: GainNode | null = null;
+  private muted = false;
 
   /** Must be called from a pointer/key handler. */
   unlock(): void {
@@ -32,9 +33,15 @@ export class EngineAudio {
     this.gain = gain;
   }
 
+  /** Silence the engine (menu open, or sound switched off). Works before and after `unlock()`. */
+  setMuted(muted: boolean): void {
+    this.muted = muted;
+    if (this.gain) this.gain.gain.value = 0;
+  }
+
   /** speedRatio 0..1, throttle 0..1. */
   update(speedRatio: number, throttle: number): void {
-    if (!this.ctx || !this.osc || !this.gain) return;
+    if (this.muted || !this.ctx || !this.osc || !this.gain) return;
     this.osc.frequency.value = 55 + speedRatio * 120;
     this.gain.gain.value = 0.035 + 0.03 * throttle;
   }

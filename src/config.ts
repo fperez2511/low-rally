@@ -128,6 +128,15 @@ export const LEADERBOARD = {
   schemaVersion: 1,
 };
 
+/** Author shown on the About card (see specs/002-main-menu). */
+export const AUTHOR = 'Fabricio Perez';
+
+/** Persisted player settings (sound on/off). */
+export const SETTINGS = {
+  key: 'lowrally.settings.v1',
+  schemaVersion: 1,
+};
+
 export const PROPS = {
   seed: 4242,
   maxTreesPerChunk: 90,

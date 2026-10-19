@@ -1,7 +1,20 @@
+import { execSync } from 'node:child_process';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
+/** Short commit of this build for the About card: git, then CI's GITHUB_SHA, then 'unknown'. */
+function resolveCommit(): string {
+  try {
+    const out = execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+    if (out) return out;
+  } catch {
+    /* no git available */
+  }
+  return process.env.GITHUB_SHA?.slice(0, 7) || 'unknown';
+}
+
 export default defineConfig({
+  define: { __APP_COMMIT__: JSON.stringify(resolveCommit()) },
   // Relative base so the build works from any sub-path (GitHub Pages, etc.).
   base: process.env.BASE_PATH ?? './',
   // Listen on the LAN so a phone can load the dev server.
